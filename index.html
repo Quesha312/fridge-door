@@ -159,7 +159,7 @@
   /* ---------- Stars tab ---------- */
   .leaderboard{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
   .lb-row{
-    background:var(--bg2);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;
+    background:var(--bg2);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
     border:1px solid rgba(255,255,255,0.06);
   }
   .lb-rank{font-family:'Caveat',cursive;font-size:22px;color:var(--chalk-dim);width:22px;text-align:center;}
@@ -208,6 +208,39 @@
   #kidList{display:flex;flex-direction:column;gap:6px;margin-top:6px;max-height:160px;overflow-y:auto;}
   #kidList .kidrow{display:flex;align-items:center;gap:8px;font-size:13.5px;background:rgba(0,0,0,0.05);padding:6px 8px;border-radius:8px;}
   #kidList .kidrow button{margin-left:auto;background:none;border:none;color:#b3261e;font-size:12px;cursor:pointer;}
+
+  /* ---------- Video call overlay ---------- */
+  #callOverlay{
+    display:none;position:fixed;inset:0;background:#111716;z-index:100;
+    flex-direction:column;align-items:center;justify-content:center;color:var(--chalk);
+  }
+  #callOverlay video{background:#000;border-radius:10px;}
+  #remoteVideo{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+  #localVideo{
+    width:110px;height:150px;object-fit:cover;position:absolute;top:16px;right:16px;
+    border:2px solid rgba(255,255,255,0.3);z-index:2;
+  }
+  #callStatusText{position:absolute;top:20px;left:20px;z-index:2;font-family:'Caveat',cursive;font-size:26px;color:var(--gold);}
+  #callControls{position:absolute;bottom:36px;left:0;right:0;display:flex;justify-content:center;gap:16px;z-index:2;}
+  #callControls button{
+    width:56px;height:56px;border-radius:50%;border:none;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+  }
+  .call-btn-hangup{background:#c0392b;color:#fff;}
+  .call-btn-toggle{background:rgba(255,255,255,0.15);color:#fff;}
+  .call-btn-toggle.off{background:rgba(226,102,93,0.5);}
+  #incomingCallScreen{
+    display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;padding:30px;
+  }
+  #incomingCallScreen .avatar-big{
+    width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:'Caveat',cursive;font-size:44px;font-weight:700;color:#fff;
+  }
+  #incomingCallScreen .name{font-family:'Caveat',cursive;font-size:34px;color:var(--gold);}
+  #incomingCallActions{display:flex;gap:20px;margin-top:10px;}
+  #incomingCallActions button{
+    width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
 </style>
 </head>
 <body>
@@ -276,6 +309,9 @@
         </div>
       </div>
       <div class="headbtns">
+        <button data-action="open-call-picker" title="Video call">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+        </button>
         <button data-action="enable-notifications" id="notifBtn" title="Turn on chat alerts">
           <svg class="icon" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         </button>
@@ -345,6 +381,39 @@
   <div id="modalBox"></div>
 </div>
 
+<!-- Video call overlay -->
+<div id="callOverlay">
+  <!-- Incoming call screen -->
+  <div id="incomingCallScreen">
+    <div class="avatar-big" id="incomingAvatar"></div>
+    <div class="name" id="incomingName"></div>
+    <div style="color:var(--chalk-dim);font-size:13px;">is calling…</div>
+    <div id="incomingCallActions">
+      <button class="call-btn-hangup" data-action="decline-call">
+        <svg class="icon" viewBox="0 0 24 24" style="width:24px;height:24px;stroke:#fff;"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a1 1 0 0 1 1.11-.21 12 12 0 0 0 3.76.6 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A18 18 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 12 12 0 0 0 .6 3.76 1 1 0 0 1-.25 1.11l-1.27 1.27"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+      </button>
+      <button class="call-btn-toggle" style="background:#4fa79a;" data-action="accept-call">
+        <svg class="icon" viewBox="0 0 24 24" style="width:24px;height:24px;stroke:#fff;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      </button>
+    </div>
+  </div>
+  <!-- Active call screen -->
+  <video id="remoteVideo" autoplay playsinline></video>
+  <video id="localVideo" autoplay playsinline muted></video>
+  <div id="callStatusText"></div>
+  <div id="callControls">
+    <button class="call-btn-toggle" id="muteBtn" data-action="toggle-mute">
+      <svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;stroke:#fff;"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+    </button>
+    <button class="call-btn-hangup" data-action="hang-up">
+      <svg class="icon" viewBox="0 0 24 24" style="width:26px;height:26px;stroke:#fff;"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a1 1 0 0 1 1.11-.21 12 12 0 0 0 3.76.6 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A18 18 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 12 12 0 0 0 .6 3.76 1 1 0 0 1-.25 1.11l-1.27 1.27"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+    </button>
+    <button class="call-btn-toggle" id="cameraBtn" data-action="toggle-camera">
+      <svg class="icon" viewBox="0 0 24 24" style="width:22px;height:22px;stroke:#fff;"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+    </button>
+  </div>
+</div>
+
 <script>
 (function(){
 
@@ -355,6 +424,28 @@
   };
   const PARENT_COLOR = '#586a64';
   const PARENT_PALETTE = ['#5b7c99', '#8a5a44', '#6b5b95', '#4f7942'];
+  const CHORE_BANK = [
+    {title:'Make your bed', stars:2},
+    {title:'Brush teeth (morning & night)', stars:1},
+    {title:'Set the table', stars:2},
+    {title:'Clear the table', stars:2},
+    {title:'Take out the trash', stars:3},
+    {title:'Take out recycling', stars:2},
+    {title:'Unload the dishwasher', stars:3},
+    {title:'Load the dishwasher', stars:3},
+    {title:'Feed the pet', stars:2},
+    {title:'Walk the dog', stars:4},
+    {title:'Tidy the living room', stars:3},
+    {title:'Vacuum a room', stars:4},
+    {title:'Fold and put away laundry', stars:4},
+    {title:'Put away clean laundry', stars:3},
+    {title:'Wipe down bathroom counter', stars:3},
+    {title:'Water the plants', stars:2},
+    {title:'Homework done before screen time', stars:3},
+    {title:'Read for 20 minutes', stars:2},
+    {title:'Pack your school bag', stars:2},
+    {title:'Sweep the kitchen floor', stars:3},
+  ];
 
   let state = {
     kids: [],
@@ -364,6 +455,7 @@
     redemptions: [],
     parents: [],
     unreadChat: 0,
+    settings: {dailyQuota: 2, penaltyStars: 3},
     me: null,       // {id,name,color,isParent}
     tab: 'board',
     pin: null,
@@ -494,6 +586,22 @@
   }
 
   // seedNew=true means "this is a brand-new family, populate starter data"
+  // ---------- native Android bridge (no-op everywhere else) ----------
+  function notifyNativeFamilyCode(code){
+    try{
+      if(window.AndroidBridge && window.AndroidBridge.subscribeToFamily){
+        window.AndroidBridge.subscribeToFamily(code);
+      }
+    }catch(e){}
+  }
+  function notifyNativeCurrentUser(id){
+    try{
+      if(window.AndroidBridge && window.AndroidBridge.setCurrentUserId){
+        window.AndroidBridge.setCurrentUserId(String(id));
+      }
+    }catch(e){}
+  }
+
   async function startFamilySession(seedNew){
     if(seedNew){
       await Promise.all([
@@ -503,8 +611,10 @@
         seedIfMissing('rewards', DEFAULT_REWARDS),
         seedIfMissing('redemptions', []),
         seedIfMissing('parents', []),
+        seedIfMissing('settings', {dailyQuota: 2, penaltyStars: 3}),
       ]);
     }
+    notifyNativeFamilyCode(FAMILY_CODE);
     attachListeners();
   }
 
@@ -551,6 +661,10 @@
     });
     dbRef('parents').on('value', snap=>{
       state.parents = snap.val() || [];
+      onSharedDataChange();
+    });
+    dbRef('settings').on('value', snap=>{
+      state.settings = snap.val() || {dailyQuota: 2, penaltyStars: 3};
       onSharedDataChange();
     });
     dbRef('chores').on('value', snap=>{
@@ -636,7 +750,268 @@
     }
   }
 
+  // ================= Video calling (WebRTC) =================
+  const ICE_SERVERS = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    // Free public TURN relay (best-effort, no account needed) - helps
+    // when a direct connection can't be made across strict networks.
+    { urls: 'turn:openrelay.metered.ca:80', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+    { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+  ];
+
+  let callState = {
+    callId: null,
+    pc: null,
+    localStream: null,
+    role: null, // 'caller' | 'callee'
+    otherName: '',
+    muted: false,
+    cameraOff: false,
+  };
+  let incomingCallListenerAttached = false;
+  let activeCallRecordRef = null;
+  let candidateRefs = [];
+
+  function everyoneElse(){
+    const kids = state.kids.map(k => ({id:k.id, name:k.name, color:COLOR_HEX[k.color]}));
+    const parents = state.parents.map(p => ({id:p.id, name:p.name, color:p.color||PARENT_COLOR}));
+    return [...kids, ...parents].filter(p => p.id !== state.me.id);
+  }
+
+  function openCallPicker(){
+    const others = everyoneElse();
+    if(!others.length){
+      alert("There's no one else set up to call yet.");
+      return;
+    }
+    const rows = others.map(p => `
+      <button class="magnet" data-action="start-call" data-id="${p.id}"
+        style="width:100%;text-align:left;display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:8px;">
+        <div class="avatar" style="width:32px;height:32px;font-size:15px;margin:0;background:${p.color}">${initials(p.name)}</div>
+        <div class="name" style="font-size:14.5px;">${escapeHtml(p.name)}</div>
+      </button>
+    `).join('');
+    showModal({
+      title: "Call someone",
+      body: rows,
+      okText: "Cancel",
+      cancelText: "Cancel",
+      onOk: async () => true
+    });
+  }
+
+  function listenForIncomingCalls(){
+    if(incomingCallListenerAttached) return;
+    incomingCallListenerAttached = true;
+    dbRef('calls').orderByChild('calleeId').equalTo(state.me.id).on('child_added', snap => {
+      const call = snap.val();
+      const callId = snap.key;
+      if(!call || call.status !== 'ringing') return;
+      if(callState.callId) return; // already on a call, ignore
+      showIncomingCall(callId, call);
+    });
+  }
+
+  function showIncomingCall(callId, call){
+    callState.callId = callId;
+    callState.role = 'callee';
+    callState.otherName = call.callerName || 'Someone';
+
+    document.getElementById('incomingAvatar').style.background = call.callerColor || PARENT_COLOR;
+    document.getElementById('incomingAvatar').textContent = initials(call.callerName || '?');
+    document.getElementById('incomingName').textContent = call.callerName || 'Someone';
+    document.getElementById('incomingCallScreen').style.display = 'flex';
+    document.getElementById('callOverlay').style.display = 'flex';
+
+    try{ if(navigator.vibrate) navigator.vibrate([300,200,300,200,300]); }catch(e){}
+
+    // Watch this specific call in case the caller hangs up before we answer
+    activeCallRecordRef = dbRef('calls/' + callId);
+    activeCallRecordRef.on('value', snap => {
+      const c = snap.val();
+      if(!c || c.status === 'ended'){
+        if(document.getElementById('incomingCallScreen').style.display === 'flex'){
+          endCallUI("They hung up before you answered.");
+        }
+      }
+    });
+  }
+
+  async function startCall(calleeId){
+    closeModal();
+    const others = everyoneElse();
+    const target = others.find(p => p.id === calleeId);
+    if(!target) return;
+
+    try{
+      callState.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    }catch(e){
+      alert("Couldn't access your camera/microphone. Check that this app has permission.");
+      return;
+    }
+
+    callState.callId = uid();
+    callState.role = 'caller';
+    callState.otherName = target.name;
+    showActiveCallUI();
+
+    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    callState.pc = pc;
+    callState.localStream.getTracks().forEach(t => pc.addTrack(t, callState.localStream));
+    document.getElementById('localVideo').srcObject = callState.localStream;
+
+    pc.ontrack = (e) => { document.getElementById('remoteVideo').srcObject = e.streams[0]; };
+    pc.onicecandidate = (e) => {
+      if(e.candidate){
+        dbRef('calls/' + callState.callId + '/callerCandidates').push(e.candidate.toJSON());
+      }
+    };
+
+    const meColor = state.me.isParent ? (state.me.color || PARENT_COLOR) : COLOR_HEX[state.me.color];
+
+    activeCallRecordRef = dbRef('calls/' + callState.callId);
+    await activeCallRecordRef.set({
+      callerId: state.me.id, callerName: state.me.name, callerColor: meColor,
+      calleeId: calleeId, calleeName: target.name,
+      status: 'ringing', createdAt: Date.now()
+    });
+
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    await activeCallRecordRef.update({ offer: { type: offer.type, sdp: offer.sdp } });
+
+    document.getElementById('callStatusText').textContent = `Calling ${target.name}…`;
+
+    activeCallRecordRef.on('value', async snap => {
+      const c = snap.val();
+      if(!c) return;
+      if(c.status === 'declined'){
+        endCallUI(`${target.name} declined.`);
+      } else if(c.status === 'ended'){
+        endCallUI("Call ended.");
+      } else if(c.answer && pc.currentRemoteDescription === null){
+        await pc.setRemoteDescription(new RTCSessionDescription(c.answer));
+        document.getElementById('callStatusText').textContent = `On call with ${target.name}`;
+      }
+    });
+
+    const calleeCandidatesRef = dbRef('calls/' + callState.callId + '/calleeCandidates');
+    candidateRefs.push(calleeCandidatesRef);
+    calleeCandidatesRef.on('child_added', snap => {
+      const cand = snap.val();
+      if(cand) pc.addIceCandidate(new RTCIceCandidate(cand)).catch(()=>{});
+    });
+  }
+
+  async function acceptCall(){
+    const callId = callState.callId;
+    document.getElementById('incomingCallScreen').style.display = 'none';
+
+    try{
+      callState.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    }catch(e){
+      alert("Couldn't access your camera/microphone. Check that this app has permission.");
+      declineCall();
+      return;
+    }
+
+    showActiveCallUI();
+    document.getElementById('callStatusText').textContent = `On call with ${callState.otherName}`;
+
+    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    callState.pc = pc;
+    callState.localStream.getTracks().forEach(t => pc.addTrack(t, callState.localStream));
+    document.getElementById('localVideo').srcObject = callState.localStream;
+
+    pc.ontrack = (e) => { document.getElementById('remoteVideo').srcObject = e.streams[0]; };
+    pc.onicecandidate = (e) => {
+      if(e.candidate){
+        dbRef('calls/' + callId + '/calleeCandidates').push(e.candidate.toJSON());
+      }
+    };
+
+    const callSnap = await dbRef('calls/' + callId).once('value');
+    const call = callSnap.val();
+    if(!call || !call.offer){ endCallUI("Call ended."); return; }
+
+    await pc.setRemoteDescription(new RTCSessionDescription(call.offer));
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    await dbRef('calls/' + callId).update({ status: 'accepted', answer: { type: answer.type, sdp: answer.sdp } });
+
+    activeCallRecordRef = dbRef('calls/' + callId);
+    activeCallRecordRef.on('value', snap => {
+      const c = snap.val();
+      if(c && c.status === 'ended'){ endCallUI("Call ended."); }
+    });
+
+    const callerCandidatesRef = dbRef('calls/' + callId + '/callerCandidates');
+    candidateRefs.push(callerCandidatesRef);
+    callerCandidatesRef.on('child_added', snap => {
+      const cand = snap.val();
+      if(cand) pc.addIceCandidate(new RTCIceCandidate(cand)).catch(()=>{});
+    });
+  }
+
+  function declineCall(){
+    if(callState.callId){
+      dbRef('calls/' + callState.callId).update({ status: 'declined' });
+    }
+    endCallUI(null);
+  }
+
+  function hangUp(){
+    if(callState.callId){
+      dbRef('calls/' + callState.callId).update({ status: 'ended' });
+    }
+    endCallUI(null);
+  }
+
+  function showActiveCallUI(){
+    document.getElementById('incomingCallScreen').style.display = 'none';
+    document.getElementById('callOverlay').style.display = 'flex';
+    document.getElementById('remoteVideo').style.display = 'block';
+    document.getElementById('localVideo').style.display = 'block';
+    document.getElementById('callControls').style.display = 'flex';
+  }
+
+  function endCallUI(message){
+    try{ if(callState.pc) callState.pc.close(); }catch(e){}
+    try{
+      if(callState.localStream) callState.localStream.getTracks().forEach(t => t.stop());
+    }catch(e){}
+    if(activeCallRecordRef){ activeCallRecordRef.off(); activeCallRecordRef = null; }
+    candidateRefs.forEach(r => r.off());
+    candidateRefs = [];
+
+    document.getElementById('callOverlay').style.display = 'none';
+    document.getElementById('incomingCallScreen').style.display = 'none';
+    document.getElementById('remoteVideo').srcObject = null;
+    document.getElementById('localVideo').srcObject = null;
+    document.getElementById('callStatusText').textContent = '';
+
+    callState = { callId: null, pc: null, localStream: null, role: null, otherName: '', muted: false, cameraOff: false };
+
+    if(message) setTimeout(() => alert(message), 100);
+  }
+
+  function toggleMute(){
+    if(!callState.localStream) return;
+    callState.muted = !callState.muted;
+    callState.localStream.getAudioTracks().forEach(t => t.enabled = !callState.muted);
+    document.getElementById('muteBtn').classList.toggle('off', callState.muted);
+  }
+  function toggleCamera(){
+    if(!callState.localStream) return;
+    callState.cameraOff = !callState.cameraOff;
+    callState.localStream.getVideoTracks().forEach(t => t.enabled = !callState.cameraOff);
+    document.getElementById('cameraBtn').classList.toggle('off', callState.cameraOff);
+  }
+
   function onSharedDataChange(){
+    runDailyQuotaCheck();
     if(document.getElementById('picker').style.display !== 'none'){
       renderPicker();
     }
@@ -653,7 +1028,8 @@
   function renderPicker(){
     const grid = document.getElementById('kidGrid');
     grid.innerHTML = state.kids.map(k => `
-      <button class="magnet" data-action="select-kid" data-id="${k.id}">
+      <button class="magnet" data-action="select-kid" data-id="${k.id}" style="position:relative;">
+        ${k.pendingWarning ? `<span style="position:absolute;top:6px;right:10px;font-size:14px;">⚠️</span>` : ''}
         <div class="avatar" style="background:${COLOR_HEX[k.color]||'#888'}">${initials(k.name)}</div>
         <div class="name">${escapeHtml(k.name)}</div>
         <div class="stars">★ ${k.stars||0}</div>
@@ -756,11 +1132,58 @@
   function selectKid(id){
     const k = state.kids.find(k=>k.id===id);
     if(!k) return;
-    state.me = {id:k.id, name:k.name, color:k.color, isParent:false};
-    enterShell();
+    if(!k.pin){
+      openSetKidPin(k);
+    } else {
+      openEnterKidPin(k);
+    }
+  }
+
+  function openSetKidPin(k){
+    showModal({
+      title: `Set your PIN, ${escapeHtml(k.name)}`,
+      body: `
+        <label>Pick a secret PIN so your siblings can't get in</label>
+        <input type="password" id="m_kpin1" inputmode="numeric" maxlength="6" placeholder="e.g. 2468">
+        <label>Confirm PIN</label>
+        <input type="password" id="m_kpin2" inputmode="numeric" maxlength="6" placeholder="repeat it">
+        <div class="modal-error" id="m_err"></div>
+      `,
+      okText: "Save & continue",
+      onOk: async () => {
+        const p1 = document.getElementById('m_kpin1').value.trim();
+        const p2 = document.getElementById('m_kpin2').value.trim();
+        if(p1.length < 4){ setModalError("PIN should be at least 4 digits"); return false; }
+        if(p1 !== p2){ setModalError("PINs don't match"); return false; }
+        k.pin = p1;
+        await setShared('kids', state.kids);
+        state.me = {id:k.id, name:k.name, color:k.color, isParent:false};
+        enterShell();
+        return true;
+      }
+    });
+  }
+
+  function openEnterKidPin(k){
+    showModal({
+      title: `Hi ${escapeHtml(k.name)}, what's your PIN?`,
+      body: `
+        <input type="password" id="m_kpin" inputmode="numeric" maxlength="6" placeholder="••••">
+        <div class="modal-error" id="m_err"></div>
+      `,
+      okText: "Enter",
+      onOk: async () => {
+        const p = document.getElementById('m_kpin').value.trim();
+        if(p !== k.pin){ setModalError("That's not it — try again"); return false; }
+        state.me = {id:k.id, name:k.name, color:k.color, isParent:false};
+        enterShell();
+        return true;
+      }
+    });
   }
 
   function enterShell(){
+    notifyNativeCurrentUser(state.me.id);
     document.getElementById('picker').style.display = 'none';
     document.getElementById('shell').style.display = 'flex';
     state.tab = 'board';
@@ -768,6 +1191,7 @@
     setActiveTabButtons();
     renderBoard(); renderStars(); renderStore(); renderChat();
     updateNotifBtnState();
+    listenForIncomingCalls();
     document.getElementById('boardTab').style.display='block';
     document.getElementById('starsTab').style.display='none';
     document.getElementById('storeTab').style.display='none';
@@ -850,6 +1274,88 @@
   }
   function kidById(id){ return state.kids.find(k=>k.id===id); }
 
+  function dateKeyFromTs(ts){
+    const d = new Date(ts);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function todayKey(){ return dateKeyFromTs(Date.now()); }
+  function yesterdayKey(){
+    const d = new Date();
+    d.setDate(d.getDate()-1);
+    return dateKeyFromTs(d.getTime());
+  }
+  function choresDoneToday(kidId){
+    const key = todayKey();
+    return state.chores.filter(c =>
+      c.status === 'done' && c.assignedTo === kidId && c.completedAt && dateKeyFromTs(c.completedAt) === key
+    ).length;
+  }
+  function choresDoneOn(kidId, dayKey){
+    return state.chores.filter(c =>
+      c.status === 'done' && c.assignedTo === kidId && c.completedAt && dateKeyFromTs(c.completedAt) === dayKey
+    ).length;
+  }
+
+  // Runs once per day (checked whenever data loads): compares each kid's
+  // completed-chore count from yesterday against the daily quota. First
+  // missed day -> a warning flag. A second missed day in a row -> stars
+  // are deducted automatically.
+  function runDailyQuotaCheck(){
+    if(!state.kids.length) return;
+    const today = todayKey();
+    const yKey = yesterdayKey();
+    const quota = (state.settings && state.settings.dailyQuota) || 0;
+    let anyChange = false;
+    const systemMessages = [];
+
+    const updatedKids = state.kids.map(k=>{
+      if(k.lastEvalDate === today) return k;
+      anyChange = true;
+      if(!k.lastEvalDate){
+        // first time tracking this kid - nothing to judge yet
+        return {...k, lastEvalDate: today};
+      }
+      if(quota <= 0){
+        return {...k, lastEvalDate: today};
+      }
+      const doneYesterday = choresDoneOn(k.id, yKey);
+      let updated = {...k, lastEvalDate: today};
+      if(doneYesterday < quota){
+        if(k.pendingWarning){
+          const penalty = (state.settings && state.settings.penaltyStars) || 0;
+          updated.stars = Math.max(0, (k.stars||0) - penalty);
+          updated.pendingWarning = true;
+          updated.lastConsequence = {type:'deduct', date: yKey, amount: penalty, done: doneYesterday, quota};
+          if(penalty > 0){
+            systemMessages.push(`${k.name} missed the daily chore quota again (${doneYesterday}/${quota}) — ${penalty} stars deducted.`);
+          }
+        } else {
+          updated.pendingWarning = true;
+          updated.lastConsequence = {type:'warn', date: yKey, done: doneYesterday, quota};
+          systemMessages.push(`${k.name} missed the daily chore quota (${doneYesterday}/${quota}) — a warning, next miss will cost stars.`);
+        }
+      } else {
+        updated.pendingWarning = false;
+        updated.lastConsequence = null;
+      }
+      return updated;
+    });
+
+    if(anyChange){
+      state.kids = updatedKids;
+      setShared('kids', state.kids);
+      if(systemMessages.length){
+        systemMessages.forEach(text=>{
+          state.chat.push({
+            id: uid(), senderId: 'system', senderName: 'Fridge Door',
+            senderColor: PARENT_COLOR, text, ts: Date.now()
+          });
+        });
+        setShared('chat', state.chat);
+      }
+    }
+  }
+
   function cardHtml(c){
     const assignedKid = c.assignedTo ? kidById(c.assignedTo) : null;
     const proposerKid = c.proposedBy ? kidById(c.proposedBy) : null;
@@ -927,8 +1433,26 @@
     const assigned = choresByStatus('assigned');
     const submitted = choresByStatus('submitted');
     const done = choresByStatus('done').slice(0,6);
+    const quota = (state.settings && state.settings.dailyQuota) || 0;
 
     let html = '';
+
+    if(!state.me.isParent && quota > 0){
+      const me = kidById(state.me.id);
+      if(me && me.pendingWarning){
+        const alreadyDeducted = me.lastConsequence && me.lastConsequence.type === 'deduct';
+        html += `
+          <div class="redeem-row" style="border-color:#e2665d;background:rgba(226,102,93,0.12);">
+            <div>
+              <div class="rr-name" style="color:#e2665d;">⚠ ${alreadyDeducted ? 'Stars were deducted' : 'Quota warning'}</div>
+              <div class="rr-title">You didn't finish ${quota} chore${quota===1?'':'s'} yesterday. ${alreadyDeducted ? 'Missing today would deduct again.' : 'Miss again and stars get deducted.'}</div>
+            </div>
+          </div>`;
+      }
+      const todayDone = kidById(state.me.id) ? choresDoneToday(state.me.id) : 0;
+      html += `<div style="font-size:12px;color:var(--chalk-dim);margin-bottom:6px;">${todayDone}/${quota} chores done today</div>`;
+    }
+
     if(proposed.length){
       html += `<h2 class="section">Kid suggestions</h2><div class="cards">${proposed.map(cardHtml).join('')}</div>`;
     }
@@ -950,14 +1474,29 @@
   // ---------- stars ----------
   function renderStars(){
     const sorted = [...state.kids].sort((a,b)=>(b.stars||0)-(a.stars||0));
-    document.getElementById('starsContent').innerHTML = sorted.map((k,i)=>`
-      <div class="lb-row">
-        <div class="lb-rank">${i+1}</div>
-        <div class="mini-avatar" style="background:${COLOR_HEX[k.color]}">${initials(k.name)}</div>
-        <div class="lb-name">${escapeHtml(k.name)}</div>
-        <div class="lb-stars">★ ${k.stars||0}</div>
-      </div>
-    `).join('');
+    const quota = (state.settings && state.settings.dailyQuota) || 0;
+    document.getElementById('starsContent').innerHTML = sorted.map((k,i)=>{
+      const done = choresDoneToday(k.id);
+      const met = quota === 0 || done >= quota;
+      const progressHtml = quota > 0
+        ? `<div style="font-size:11px;color:${met ? '#7a9b5c' : '#e2665d'};margin-top:2px;">${done}/${quota} chores today</div>`
+        : '';
+      const warnBadge = k.pendingWarning
+        ? `<div style="font-size:10.5px;color:#e2665d;margin-top:2px;">⚠ missed quota yesterday${k.lastConsequence && k.lastConsequence.type==='deduct' ? ' — stars deducted' : ' — warning'}</div>`
+        : '';
+      return `
+        <div class="lb-row">
+          <div class="lb-rank">${i+1}</div>
+          <div class="mini-avatar" style="background:${COLOR_HEX[k.color]}">${initials(k.name)}</div>
+          <div style="flex:1;">
+            <div class="lb-name">${escapeHtml(k.name)}</div>
+            ${progressHtml}
+            ${warnBadge}
+          </div>
+          <div class="lb-stars">★ ${k.stars||0}</div>
+        </div>
+      `;
+    }).join('');
   }
 
   // ---------- store ----------
@@ -1139,7 +1678,12 @@
     showModal({
       title: "New chore",
       body: `
-        <label>What needs doing?</label>
+        <label>Pick from the chore bank, or write your own</label>
+        <select id="m_bank">
+          <option value="custom">✏️ Custom chore…</option>
+          ${CHORE_BANK.map((c,i)=>`<option value="${i}">${escapeHtml(c.title)} (★${c.stars})</option>`).join('')}
+        </select>
+        <label>Title</label>
         <input type="text" id="m_title" placeholder="e.g. Empty the dishwasher" maxlength="80">
         <div class="row">
           <div>
@@ -1175,13 +1719,33 @@
         return true;
       }
     });
+    const bankSelect = document.getElementById('m_bank');
+    if(bankSelect){
+      bankSelect.addEventListener('change', () => {
+        const val = bankSelect.value;
+        const titleEl = document.getElementById('m_title');
+        const starsEl = document.getElementById('m_stars');
+        if(val === 'custom'){
+          titleEl.value = '';
+          titleEl.focus();
+        } else {
+          const item = CHORE_BANK[parseInt(val,10)];
+          if(item){ titleEl.value = item.title; starsEl.value = item.stars; }
+        }
+      });
+    }
   }
 
   function openProposeForm(){
     showModal({
       title: "Suggest a chore",
       body: `
-        <label>What could you do?</label>
+        <label>Pick from the chore bank, or write your own</label>
+        <select id="m_bank">
+          <option value="custom">✏️ Custom chore…</option>
+          ${CHORE_BANK.map((c,i)=>`<option value="${i}">${escapeHtml(c.title)} (★${c.stars})</option>`).join('')}
+        </select>
+        <label>Title</label>
         <input type="text" id="m_title" placeholder="e.g. Walk the dog" maxlength="80">
         <label>How many stars is it worth?</label>
         <input type="number" id="m_stars" min="0" value="3">
@@ -1205,6 +1769,21 @@
         return true;
       }
     });
+    const bankSelect2 = document.getElementById('m_bank');
+    if(bankSelect2){
+      bankSelect2.addEventListener('change', () => {
+        const val = bankSelect2.value;
+        const titleEl = document.getElementById('m_title');
+        const starsEl = document.getElementById('m_stars');
+        if(val === 'custom'){
+          titleEl.value = '';
+          titleEl.focus();
+        } else {
+          const item = CHORE_BANK[parseInt(val,10)];
+          if(item){ titleEl.value = item.title; starsEl.value = item.stars; }
+        }
+      });
+    }
   }
 
   async function claimChore(id){
@@ -1279,6 +1858,7 @@
       <div class="kidrow">
         <div class="mini-avatar" style="width:24px;height:24px;font-size:12px;background:${COLOR_HEX[k.color]}">${initials(k.name)}</div>
         <span>${escapeHtml(k.name)}</span>
+        ${k.pin ? `<button data-action="reset-kid-pin" data-id="${k.id}" style="color:#5a4d33;">reset PIN</button>` : ''}
         <button data-action="remove-kid" data-id="${k.id}">remove</button>
       </div>
     `).join('') || '<div class="empty">No kids yet.</div>';
@@ -1303,6 +1883,15 @@
           <div><input type="text" id="m_newkid" placeholder="Add a kid's name" maxlength="30"></div>
         </div>
         <div class="modal-error" id="m_err"></div>
+        <label style="margin-top:18px;">Daily chore quota</label>
+        <div style="padding:10px;background:rgba(0,0,0,0.05);border-radius:8px;">
+          <div class="row">
+            <div><input type="number" id="m_weeklygoal" min="0" value="${(state.settings && state.settings.dailyQuota) || 0}" placeholder="Chores/day"></div>
+            <div><input type="number" id="m_penaltystars" min="0" value="${(state.settings && state.settings.penaltyStars) || 0}" placeholder="Star penalty"></div>
+          </div>
+          <div style="font-size:11.5px;color:#5a4d33;margin-top:4px;">Set quota to 0 to turn this off. If a kid falls short one day, they get a warning (shown on their Stars tab + a chat note). Falling short again the very next day auto-deducts the star penalty — no need to do anything yourself.</div>
+          <button class="btn-ghost" data-action="save-goals" style="width:100%;margin-top:8px;">Save quota</button>
+        </div>
       `,
       okText: "Add kid",
       cancelText: "Close",
@@ -1319,6 +1908,13 @@
   }
   async function removeKid(id){
     state.kids = state.kids.filter(k=>k.id!==id);
+    await setShared('kids', state.kids);
+    renderSettingsModal();
+  }
+  async function resetKidPin(id){
+    const k = state.kids.find(k=>k.id===id);
+    if(!k) return;
+    delete k.pin;
     await setShared('kids', state.kids);
     renderSettingsModal();
   }
@@ -1341,6 +1937,14 @@
     state.parents = state.parents.filter(p=>p.id!==id);
     await setShared('parents', state.parents);
     renderSettingsModal();
+  }
+  async function saveGoals(){
+    const goal = parseInt(document.getElementById('m_weeklygoal').value,10) || 0;
+    const penalty = parseInt(document.getElementById('m_penaltystars').value,10) || 0;
+    state.settings = {dailyQuota: goal, penaltyStars: penalty};
+    await setShared('settings', state.settings);
+    renderSettingsModal();
+    renderStars();
   }
 
   // ---------- modal engine ----------
@@ -1398,6 +2002,13 @@
     }
     if(action === 'switch-user') return switchUser();
     if(action === 'enable-notifications') return handleEnableNotifications();
+    if(action === 'open-call-picker') return openCallPicker();
+    if(action === 'start-call') return startCall(id);
+    if(action === 'accept-call') return acceptCall();
+    if(action === 'decline-call') return declineCall();
+    if(action === 'hang-up') return hangUp();
+    if(action === 'toggle-mute') return toggleMute();
+    if(action === 'toggle-camera') return toggleCamera();
     if(action === 'tab') return showTab(el.dataset.tab);
     if(action === 'fab'){
       return state.me.isParent ? openNewChoreForm() : openProposeForm();
@@ -1413,8 +2024,10 @@
     if(action === 'decline-proposal') return declineProposal(id);
     if(action === 'parent-settings') return openParentSettings();
     if(action === 'remove-kid') return removeKid(id);
+    if(action === 'reset-kid-pin') return resetKidPin(id);
     if(action === 'add-parent-settings') return addParentFromSettings();
     if(action === 'remove-parent') return removeParent(id);
+    if(action === 'save-goals') return saveGoals();
     if(action === 'new-reward') return openNewRewardForm();
     if(action === 'delete-reward') return deleteReward(id);
     if(action === 'redeem-reward') return redeemReward(id);
