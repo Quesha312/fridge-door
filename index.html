@@ -736,17 +736,29 @@
   function updateNotifBtnState(){
     const btn = document.getElementById('notifBtn');
     if(!btn) return;
+    const isNativeApp = !!(window.AndroidBridge && window.AndroidBridge.subscribeToFamily);
+    if(isNativeApp){
+      btn.style.color = 'var(--gold)';
+      return;
+    }
     btn.style.color = (canNotify() && Notification.permission === 'granted') ? 'var(--gold)' : '';
   }
   async function handleEnableNotifications(){
+    const isNativeApp = !!(window.AndroidBridge && window.AndroidBridge.subscribeToFamily);
+    if(isNativeApp){
+      showAlert("You're all set — this app sends real notifications automatically, even when it's closed. There's nothing to turn on here.", "Notifications");
+      return;
+    }
     if(!canNotify()){
-      alert("This app can't show alerts on this device/browser.");
+      showAlert("This browser can't show alerts on this device.");
       return;
     }
     const granted = await requestNotificationPermission();
     updateNotifBtnState();
     if(!granted){
-      alert("Alerts are off. You can turn them on in your browser or app settings.");
+      showAlert("Alerts are off. You can turn them on in your browser settings.");
+    } else {
+      showAlert("Alerts are on — you'll get a notification for new chat messages while this tab is open or in the background.", "Notifications");
     }
   }
 
@@ -783,7 +795,7 @@
   function openCallPicker(){
     const others = everyoneElse();
     if(!others.length){
-      alert("There's no one else set up to call yet.");
+      showAlert("There's no one else set up to call yet.");
       return;
     }
     const rows = others.map(p => `
@@ -848,7 +860,7 @@
     try{
       callState.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     }catch(e){
-      alert("Couldn't access your camera/microphone. Check that this app has permission.");
+      showAlert("Couldn't access your camera/microphone. Check that this app has permission.");
       return;
     }
 
@@ -912,7 +924,7 @@
     try{
       callState.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
     }catch(e){
-      alert("Couldn't access your camera/microphone. Check that this app has permission.");
+      showAlert("Couldn't access your camera/microphone. Check that this app has permission.");
       declineCall();
       return;
     }
@@ -994,7 +1006,7 @@
 
     callState = { callId: null, pc: null, localStream: null, role: null, otherName: '', muted: false, cameraOff: false };
 
-    if(message) setTimeout(() => alert(message), 100);
+    if(message) setTimeout(() => showAlert(message), 100);
   }
 
   function toggleMute(){
@@ -1411,7 +1423,10 @@
         actions = `<div class="waiting">submitted — waiting on a parent</div>`;
       }
     } else if(c.status === 'done'){
-      actions = `<div class="waiting">✓ done${assignedKid?(' by '+escapeHtml(assignedKid.name)):''}</div>`;
+      const undoBtn = isParent
+        ? `<button class="btn-ghost" data-action="undo-approve" data-id="${c.id}" style="margin-left:8px;">${ICON_BACK}Undo</button>`
+        : '';
+      actions = `<div class="waiting" style="display:flex;align-items:center;">✓ done${assignedKid?(' by '+escapeHtml(assignedKid.name)):''}${undoBtn}</div>`;
     }
 
     return `
@@ -1812,6 +1827,17 @@
     await setShared('kids', state.kids);
     renderBoard(); renderStars(); renderShellHeader();
   }
+  async function undoApprove(id){
+    const c = state.chores.find(c=>c.id===id);
+    if(!c || c.status !== 'done') return;
+    const k = kidById(c.assignedTo);
+    if(k) k.stars = Math.max(0, (k.stars||0) - (c.stars||0));
+    c.status = 'submitted';
+    delete c.completedAt;
+    await setShared('chores', state.chores);
+    await setShared('kids', state.kids);
+    renderBoard(); renderStars(); renderShellHeader();
+  }
   async function sendBackChore(id){
     const c = state.chores.find(c=>c.id===id);
     if(!c) return;
@@ -1971,6 +1997,23 @@
     pendingModalSubmit = null;
   }
 
+  // Plain alert()/confirm() don't reliably show inside a bare WebView
+  // (the wrapped Android app has no JS-dialog handling). This renders
+  // the same message using our own on-page modal instead, which always works.
+  function showAlert(message, title){
+    const overlay = document.getElementById('modalOverlay');
+    const box = document.getElementById('modalBox');
+    box.innerHTML = `
+      <h3>${title || 'Heads up'}</h3>
+      <div style="font-size:14px;line-height:1.5;color:#2c2418;">${escapeHtml(message)}</div>
+      <div id="modalActions">
+        <button class="modal-ok" data-action="modal-cancel">OK</button>
+      </div>
+    `;
+    overlay.style.display = 'flex';
+    pendingModalSubmit = null;
+  }
+
   // ---------- event delegation ----------
   document.addEventListener('click', async (e)=>{
     const el = e.target.closest('[data-action]');
@@ -1993,71 +2036,4 @@
       const text = document.getElementById('familyLinkText').textContent;
       const msg = document.getElementById('copyMsg');
       try{
-        await navigator.clipboard.writeText(text);
-        msg.textContent = 'Copied!';
-      }catch(e){
-        msg.textContent = 'Could not auto-copy — long-press the text above to copy it.';
-      }
-      return;
-    }
-    if(action === 'switch-user') return switchUser();
-    if(action === 'enable-notifications') return handleEnableNotifications();
-    if(action === 'open-call-picker') return openCallPicker();
-    if(action === 'start-call') return startCall(id);
-    if(action === 'accept-call') return acceptCall();
-    if(action === 'decline-call') return declineCall();
-    if(action === 'hang-up') return hangUp();
-    if(action === 'toggle-mute') return toggleMute();
-    if(action === 'toggle-camera') return toggleCamera();
-    if(action === 'tab') return showTab(el.dataset.tab);
-    if(action === 'fab'){
-      return state.me.isParent ? openNewChoreForm() : openProposeForm();
-    }
-    if(action === 'new-chore') return openNewChoreForm();
-    if(action === 'propose-chore') return openProposeForm();
-    if(action === 'claim-chore') return claimChore(id);
-    if(action === 'mark-done') return markDone(id);
-    if(action === 'approve-chore') return approveChore(id);
-    if(action === 'sendback-chore') return sendBackChore(id);
-    if(action === 'delete-chore') return deleteChore(id);
-    if(action === 'approve-proposal') return approveProposal(id);
-    if(action === 'decline-proposal') return declineProposal(id);
-    if(action === 'parent-settings') return openParentSettings();
-    if(action === 'remove-kid') return removeKid(id);
-    if(action === 'reset-kid-pin') return resetKidPin(id);
-    if(action === 'add-parent-settings') return addParentFromSettings();
-    if(action === 'remove-parent') return removeParent(id);
-    if(action === 'save-goals') return saveGoals();
-    if(action === 'new-reward') return openNewRewardForm();
-    if(action === 'delete-reward') return deleteReward(id);
-    if(action === 'redeem-reward') return redeemReward(id);
-    if(action === 'approve-redemption') return approveRedemption(id);
-    if(action === 'decline-redemption') return declineRedemption(id);
-    if(action === 'send-chat') return sendChat();
-
-    if(action === 'modal-cancel') return closeModal();
-    if(action === 'modal-ok'){
-      if(pendingModalSubmit){
-        const shouldClose = await pendingModalSubmit();
-        if(shouldClose !== false) closeModal();
-      } else {
-        closeModal();
-      }
-      return;
-    }
-  });
-
-  document.addEventListener('keyup', (e)=>{
-    if(e.key === 'Enter' && e.target.id === 'chatInput') sendChat();
-    if(e.key === 'Enter' && e.target.id === 'joinCodeInput') joinFamily();
-  });
-  document.getElementById('chatMessages').addEventListener('scroll', ()=>{
-    const box = document.getElementById('chatMessages');
-    chatAtBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
-  });
-
-  init();
-})();
-</script>
-</body>
-</html>
+        await navigator.clipboard.wri
