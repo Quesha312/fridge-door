@@ -2,8 +2,7 @@
 
 A family chore, allowance, and chat app — chores with star rewards, a
 redeemable prize store, family chat with video calling, and real push
-notifications. Runs as a website, an installed home-screen app, and a
-native Android app.
+notifications.
 
 ---
 
@@ -19,128 +18,106 @@ native Android app.
 - **Stars** — a leaderboard, plus each kid's own PIN-protected profile
 - **Store** — parents stock a rewards shelf (screen time, pick dinner, etc.);
   kids redeem stars, parent confirms fulfillment
-- **Chat** — family group chat, with notifications (badge, best-effort
-  browser alert, and real push through the Android app) whenever someone
-  sends a message, suggests a chore, finishes a chore, or gets one approved
-- **Video calling** — tap someone's name to start a face-to-face call,
-  device to device, no third-party service
-- **Multiple families** — one deployed link supports any number of separate
-  families, each with their own private code — perfect for sharing this
-  project with relatives without mixing data
-- **Custom backgrounds** — every parent and kid can pick their own theme,
-  visible only to them
+- **Chat** — family group chat with notifications for new messages, chore
+  suggestions, completions, and approvals
+- **Video calling** — tap someone's name to start a face-to-face call
+- **Multiple families** — one link supports any number of totally separate
+  families, each with their own private code
+- **Custom backgrounds** — every parent and kid can pick their own theme
 
 ---
 
-## One-time setup
+## Using it (this is all 99% of people ever need to read)
 
-### 1. Firebase (the syncing backend — free, no Blaze plan needed)
-1. Create a project at [console.firebase.google.com](https://console.firebase.google.com)
-2. **Build → Realtime Database → Create Database** → start in **test mode**
-3. **Project settings → General → Your apps → add a Web app** → copy the
-   `firebaseConfig` object it gives you
-4. Paste those values into `firebaseConfig` near the top of the `<script>`
-   tag in `family-board.html`
+1. Open the link you were sent
+2. Tap **"Create our family"** if this is a brand new, separate family
+   (like a sibling wanting their own independent version), or **"I'm a kid
+   with a code"** if someone gave you a code to join their family
+3. Pick your name, set a PIN — that's it
 
-### 2. Host the file
-Upload `family-board.html` somewhere with a real `https://` URL — GitHub
-Pages is what this project has been using:
-1. Create a repo on [github.com](https://github.com), upload the file
-2. **Settings → Pages** → set Source to your main branch
-3. Your link appears as `https://yourusername.github.io/reponame/`
+**Want it as an app instead of a browser tab?**
+- **iPhone:** open the link in **Safari** → Share button → **Add to Home
+  Screen**
+- **Android:** open the link in **Chrome** → menu (⋮) → **Add to Home
+  Screen**
+- **Android, alternative:** if a `.apk` file was built for this app, just
+  install that file directly — nothing to set up, it's a finished app
 
-*(This has to be a real hosted link — opening the raw file locally,
-or from a Bluetooth/AirDrop transfer, will not work. The app needs to reach
-Firebase over the internet every time it loads.)*
-
-### 3. Create your family
-Open the hosted link → **"Create our family"** → set your name and PIN →
-you'll get a private family link/code. Send that to your kids (or, for a
-second family like a sibling's, they tap "I'm a kid with a code" or create
-their own family the same way — completely separate data, same app).
-
-Each kid picks their own PIN the first time they tap their tile, so
-siblings can't get into each other's profile. Each parent can also have
-their own separate PIN via "New parent? Set up your own PIN."
+Nothing past this point applies to you unless you're the one maintaining
+the deployment itself.
 
 ---
 
-## Real push notifications (optional, free, no Blaze)
+## Everything below is one-time, deployer-only, and already done
 
-Regular browser notifications only work while the tab/app is open or
-backgrounded — for real notifications even when the app is fully closed,
-see `apps-script-notifications/SETUP.md`. Short version: a free Google
-Apps Script checks for new messages once a minute and sends a push
-through Firebase Cloud Messaging directly — no credit card, no paid plan.
+This is reference material for whoever set this up (or future-you, six
+months from now, wondering how any of this works) — not instructions
+anyone joining a family needs to follow.
 
-The `firebase-functions/` folder is an alternate, instant version of the
-same thing, but requires Firebase's Blaze plan (a card on file, though
-realistically $0/month) — only needed if the one-minute delay of the free
-route ever bothers you.
+### Firebase (the syncing backend — free, no Blaze plan needed)
+1. Create a project at console.firebase.google.com
+2. **Build → Realtime Database → Create Database** → test mode
+3. **Project settings → Your apps → add a Web app** → copy the
+   `firebaseConfig` object
+4. Paste those values into `firebaseConfig` near the top of
+   `family-board.html`
 
----
+### Hosting
+Upload `family-board.html` somewhere with a real `https://` URL (this
+project uses GitHub Pages: create a repo, upload the file, **Settings →
+Pages** → set Source to main branch). Has to be a real hosted link —
+a local file or one sent via Bluetooth/AirDrop won't work, since the app
+needs to reach Firebase over the internet every time it loads.
 
-## Installing as an app
+### Real push notifications (optional, free, no Blaze)
+Regular browser notifications only work while the app is open or
+backgrounded. For real notifications even when fully closed, see
+`apps-script-notifications/SETUP.md` — a free Google Apps Script checks
+for new messages once a minute and pushes through Firebase Cloud
+Messaging, no card needed. This is set up **once** and automatically
+covers every family using this deployment, not just one.
 
-**iPhone:** open the link in **Safari** (must be Safari) → Share button →
-**Add to Home Screen**. Gives a full-screen icon, no browser bars.
+`firebase-functions/` is an alternate, instant version of the same thing,
+but requires Firebase's Blaze plan (a card on file, though realistically
+$0/month at this scale) — only worth it if the Apps Script's ~1 minute
+delay bothers you.
 
-**Android — easiest:** open the link in **Chrome** → menu (⋮) →
-**Add to Home Screen**. Same result, and supports real push notifications
-through the browser itself.
-
-**Android — native app:** the `android-webview-app/` folder is a full
-Android Studio / AndroidIDE project that wraps the site with:
-- Firebase Cloud Messaging for guaranteed push notifications even when
-  fully closed (works with the Apps Script above)
-- Native camera/mic permission handling for video calls
-- A JS bridge (`window.AndroidBridge`) that the web app calls automatically
-  to subscribe to the right family's notifications
-
-See `android-webview-app/README.md` for build steps. You'll need to:
-1. Register an Android app in the same Firebase project
-   (package name: `com.family.fridgedoor`) and drop the downloaded
-   `google-services.json` into `android-webview-app/app/`
-2. Set `APP_URL` in `MainActivity.kt` to your hosted link
-3. Build with `gradlew assembleDebug`
+### Building the native Android app
+`android-webview-app/` is a full Android Studio / AndroidIDE project that
+wraps the site with real push notifications (even fully closed) and
+native camera/mic permission handling for calls. See
+`android-webview-app/README.md` for the build steps. Once built, the
+resulting `.apk` file is what gets shared with family members to install
+— they never touch the project itself.
 
 *Known limitation:* video calling has been unreliable specifically inside
 the custom Android WebView wrapper on some devices (a `NotReadableError`
-on the microphone that doesn't happen in real Chrome) — if you hit this,
-just use the Chrome/Add-to-Home-Screen version for calls, and the native
-app for its stronger notification support. Two install methods, each
-better at a different thing.
+on the microphone that doesn't happen in real Chrome). If that happens,
+use the Chrome/Add-to-Home-Screen install for calls, and the native app
+for its stronger notification support — two install methods, each better
+at a different thing.
 
----
+### Settings a parent can adjust
+Under the Settings gear (parent mode only): add/remove parents and kids,
+reset a forgotten kid PIN, daily chore quota + star penalty, late cutoff
+time.
 
-## Settings a parent can adjust
-
-All under the **Settings** gear (parent mode only):
-- Add/remove parents and kids, reset a forgotten kid PIN
-- Daily chore quota + star penalty amount
-- Late cutoff time (default 8:30pm)
-
----
-
-## File overview
-
+### File overview
 ```
 family-board.html              The entire app - one self-contained file
-app-icon-512.png / -1024.png   App icon (for AppGeyser, Android, etc.)
-android-webview-app/           Native Android project (Android Studio/AndroidIDE)
+app-icon-512.png / -1024.png   App icon
+android-webview-app/           Native Android project
 apps-script-notifications/     Free push notification setup (recommended)
-firebase-functions/            Alternate instant push setup (needs Blaze plan)
+firebase-functions/            Alternate instant push setup (needs Blaze)
 ```
 
-## Known limitations, honestly
-
-- Firebase's free "test mode" database rules mean anyone with your exact
-  link/database URL could technically read or write your data — fine for
+### Known limitations, honestly
+- Firebase's free test-mode database rules mean anyone with the exact
+  link/database URL could technically read or write the data — fine for
   a private family tool, just don't publish the link or Firebase config
-  anywhere public.
-- Notifications are only instant with the Apps Script if you don't mind a
-  ~1 minute delay; the Blaze/Cloud Functions route is instant but needs a
-  card on file (free at this scale, but Google requires it regardless).
-- Video calling depends on both devices getting a decent connection to
-  each other (or the free TURN relay it falls back to) — it isn't 100%
-  guaranteed across every network, same as any consumer video call app.
+  publicly.
+- The free notification route has a ~1 minute delay; the instant route
+  needs a card on file (still free at this scale).
+- Video calling depends on both devices reaching each other (or the free
+  relay it falls back to) — not 100% guaranteed on every network, same as
+  any consumer video call app.
