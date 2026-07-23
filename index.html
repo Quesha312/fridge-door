@@ -382,6 +382,8 @@
   <div id="modalBox"></div>
 </div>
 
+<input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none;">
+
 <!-- Video call overlay -->
 <div id="callOverlay">
   <!-- Incoming call screen -->
@@ -1439,27 +1441,35 @@
       }
     } else if(c.status === 'assigned'){
       if(!isParent && c.assignedTo === meId){
-        actions = `<div class="actions"><button class="btn-primary" data-action="mark-done" data-id="${c.id}">${ICON_CHECK}Mark done</button></div>`;
+        const markAction = c.requiresPhoto ? 'mark-done-photo' : 'mark-done';
+        const markLabel = c.requiresPhoto ? 'Take photo &amp; mark done' : 'Mark done';
+        const ICON_CAMERA = `<svg class="icon icon-sm" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+        actions = `<div class="actions"><button class="btn-primary" data-action="${markAction}" data-id="${c.id}">${c.requiresPhoto ? ICON_CAMERA : ICON_CHECK}${markLabel}</button></div>`;
       } else if(isParent){
         actions = `<div class="actions"><button class="btn-danger" data-action="delete-chore" data-id="${c.id}">${ICON_TRASH}Remove</button></div>`;
       } else {
         actions = `<div class="waiting">assigned to ${assignedKid?escapeHtml(assignedKid.name):'—'}</div>`;
       }
     } else if(c.status === 'submitted'){
+      const lateNote = c.isLate ? `<div class="reward-need" style="margin-bottom:6px;">🌙 submitted after 8:30pm — stars will be cut in half</div>` : '';
+      const photoHtml = c.proofPhoto ? `<img src="${c.proofPhoto}" style="width:100%;max-width:220px;border-radius:8px;display:block;margin-bottom:8px;" alt="proof photo">` : '';
       if(isParent){
         actions = `
+          ${lateNote}${photoHtml}
           <div class="actions">
             <button class="btn-primary" data-action="approve-chore" data-id="${c.id}">${ICON_CHECK}Approve &amp; pay out</button>
             <button class="btn-ghost" data-action="sendback-chore" data-id="${c.id}">${ICON_BACK}Send back</button>
           </div>`;
       } else {
-        actions = `<div class="waiting">submitted — waiting on a parent</div>`;
+        actions = `${lateNote}${photoHtml}<div class="waiting">submitted — waiting on a parent</div>`;
       }
     } else if(c.status === 'done'){
       const undoBtn = isParent
         ? `<button class="btn-ghost" data-action="undo-approve" data-id="${c.id}" style="margin-left:8px;">${ICON_BACK}Undo</button>`
         : '';
-      actions = `<div class="waiting" style="display:flex;align-items:center;">✓ done${assignedKid?(' by '+escapeHtml(assignedKid.name)):''}${undoBtn}</div>`;
+      const awardedNote = (c.awardedStars != null && c.awardedStars < (c.stars||0))
+        ? ` <span style="color:#e2665d;">(★${c.awardedStars} — late penalty)</span>` : '';
+      actions = `<div class="waiting" style="display:flex;align-items:center;flex-wrap:wrap;">✓ done${assignedKid?(' by '+escapeHtml(assignedKid.name)):''}${awardedNote}${undoBtn}</div>`;
     }
 
     return `
@@ -1469,6 +1479,7 @@
         <div class="meta">
           <span class="star-badge">★ ${c.stars}</span>
           ${tag}
+          ${c.requiresPhoto ? '<span class="tag" style="background:#6b5b95;">📷 proof needed</span>' : ''}
         </div>
         ${actions}
       </div>
@@ -1746,6 +1757,10 @@
             </select>
           </div>
         </div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-weight:600;font-size:12.5px;color:#5a4d33;">
+          <input type="checkbox" id="m_requirephoto" style="width:auto;">
+          Require a photo as proof when marked done
+        </label>
         <div class="modal-error" id="m_err"></div>
       `,
       okText: "Post chore",
@@ -1753,12 +1768,14 @@
         const title = document.getElementById('m_title').value.trim();
         const stars = parseInt(document.getElementById('m_stars').value,10) || 0;
         const assign = document.getElementById('m_assign').value;
+        const requiresPhoto = document.getElementById('m_requirephoto').checked;
         if(!title){ setModalError("Give the chore a title"); return false; }
         const chore = {
           id: uid(), title, stars,
           status: assign ? 'assigned' : 'open',
           assignedTo: assign || null,
           proposedBy: null,
+          requiresPhoto,
           createdAt: Date.now()
         };
         state.chores.push(chore);
@@ -1842,20 +1859,65 @@
     await setShared('chores', state.chores);
     renderBoard();
   }
-  async function markDone(id){
+  // ---------- late penalty ----------
+  const LATE_CUTOFF_HOUR = 20, LATE_CUTOFF_MIN = 30; // 8:30 PM, local device time
+  function isPastLateCutoff(){
+    const now = new Date();
+    return (now.getHours() > LATE_CUTOFF_HOUR) ||
+           (now.getHours() === LATE_CUTOFF_HOUR && now.getMinutes() >= LATE_CUTOFF_MIN);
+  }
+
+  async function markDone(id, photoDataUrl){
     const c = state.chores.find(c=>c.id===id);
     if(!c) return;
     c.status = 'submitted';
+    c.submittedAt = Date.now();
+    c.isLate = isPastLateCutoff();
+    if(photoDataUrl) c.proofPhoto = photoDataUrl;
     await setShared('chores', state.chores);
     renderBoard();
   }
+
+  // ---------- photo proof capture ----------
+  let pendingPhotoChoreId = null;
+  function requestPhotoForChore(id){
+    pendingPhotoChoreId = id;
+    const input = document.getElementById('photoInput');
+    if(input) input.click();
+  }
+  function compressImageFile(file, maxDim, quality){
+    return new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onload = (e)=>{
+        const img = new Image();
+        img.onload = ()=>{
+          let w = img.width, h = img.height;
+          if(w > h){ if(w > maxDim){ h = Math.round(h*maxDim/w); w = maxDim; } }
+          else { if(h > maxDim){ w = Math.round(w*maxDim/h); h = maxDim; } }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
   async function approveChore(id){
     const c = state.chores.find(c=>c.id===id);
     if(!c) return;
     c.status = 'done';
     c.completedAt = Date.now();
+    const base = c.stars || 0;
+    const awarded = c.isLate ? Math.max(1, Math.round(base / 2)) : base;
+    c.awardedStars = awarded;
     const k = kidById(c.assignedTo);
-    if(k) k.stars = (k.stars||0) + (c.stars||0);
+    if(k) k.stars = (k.stars||0) + awarded;
     await setShared('chores', state.chores);
     await setShared('kids', state.kids);
     renderBoard(); renderStars(); renderShellHeader();
@@ -1863,10 +1925,12 @@
   async function undoApprove(id){
     const c = state.chores.find(c=>c.id===id);
     if(!c || c.status !== 'done') return;
+    const refund = (c.awardedStars != null) ? c.awardedStars : (c.stars||0);
     const k = kidById(c.assignedTo);
-    if(k) k.stars = Math.max(0, (k.stars||0) - (c.stars||0));
+    if(k) k.stars = Math.max(0, (k.stars||0) - refund);
     c.status = 'submitted';
     delete c.completedAt;
+    delete c.awardedStars;
     await setShared('chores', state.chores);
     await setShared('kids', state.kids);
     renderBoard(); renderStars(); renderShellHeader();
@@ -2093,6 +2157,7 @@
     if(action === 'propose-chore') return openProposeForm();
     if(action === 'claim-chore') return claimChore(id);
     if(action === 'mark-done') return markDone(id);
+    if(action === 'mark-done-photo') return requestPhotoForChore(id);
     if(action === 'approve-chore') return approveChore(id);
     if(action === 'undo-approve') return undoApprove(id);
     if(action === 'sendback-chore') return sendBackChore(id);
@@ -2131,6 +2196,20 @@
   document.getElementById('chatMessages').addEventListener('scroll', ()=>{
     const box = document.getElementById('chatMessages');
     chatAtBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+  });
+
+  document.getElementById('photoInput').addEventListener('change', async (e)=>{
+    const file = e.target.files[0];
+    e.target.value = ''; // allow picking the same file again later
+    if(!file || !pendingPhotoChoreId) return;
+    const choreId = pendingPhotoChoreId;
+    pendingPhotoChoreId = null;
+    try{
+      const dataUrl = await compressImageFile(file, 500, 0.6);
+      await markDone(choreId, dataUrl);
+    }catch(err){
+      showAlert("Couldn't process that photo — try again.", "Photo failed");
+    }
   });
 
   init();
