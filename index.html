@@ -310,6 +310,9 @@
         </div>
       </div>
       <div class="headbtns">
+        <button data-action="open-bg-picker" title="Customize your background">
+          <svg class="icon" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+        </button>
         <button data-action="open-call-picker" title="Video call">
           <svg class="icon" viewBox="0 0 24 24"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
         </button>
@@ -427,6 +430,17 @@
   };
   const PARENT_COLOR = '#586a64';
   const PARENT_PALETTE = ['#5b7c99', '#8a5a44', '#6b5b95', '#4f7942'];
+
+  const BG_THEMES = {
+    classic:   { name: 'Classic',   css: null },
+    ocean:     { name: 'Ocean',     css: 'linear-gradient(160deg, #0f2027, #203a43, #2c5364)' },
+    sunset:    { name: 'Sunset',    css: 'linear-gradient(160deg, #3a1c34, #6a3e5c, #c97b63)' },
+    forest:    { name: 'Forest',    css: 'linear-gradient(160deg, #10241a, #1f3b2c, #3c6e4f)' },
+    galaxy:    { name: 'Galaxy',    css: 'linear-gradient(160deg, #0d0221, #240b36, #431f5e)' },
+    bubblegum: { name: 'Bubblegum', css: 'linear-gradient(160deg, #2e1a24, #5c2a4a, #a34f74)' },
+    midnight:  { name: 'Midnight',  css: 'linear-gradient(160deg, #050608, #0d1117, #161b22)' },
+    candy:     { name: 'Candy',     css: 'linear-gradient(160deg, #221a35, #3d2a5c, #7a4fa3)' },
+  };
   const CHORE_BANK = [
     {title:'Make your bed', stars:2},
     {title:'Brush teeth (morning & night)', stars:1},
@@ -458,7 +472,7 @@
     redemptions: [],
     parents: [],
     unreadChat: 0,
-    settings: {dailyQuota: 2, penaltyStars: 3},
+    settings: {dailyQuota: 2, penaltyStars: 3, lateCutoffHour: 20, lateCutoffMin: 30},
     me: null,       // {id,name,color,isParent}
     tab: 'board',
     pin: null,
@@ -614,7 +628,7 @@
         seedIfMissing('rewards', DEFAULT_REWARDS),
         seedIfMissing('redemptions', []),
         seedIfMissing('parents', []),
-        seedIfMissing('settings', {dailyQuota: 2, penaltyStars: 3}),
+        seedIfMissing('settings', {dailyQuota: 2, penaltyStars: 3, lateCutoffHour: 20, lateCutoffMin: 30}),
       ]);
     }
     notifyNativeFamilyCode(FAMILY_CODE);
@@ -667,7 +681,7 @@
       onSharedDataChange();
     });
     dbRef('settings').on('value', snap=>{
-      state.settings = snap.val() || {dailyQuota: 2, penaltyStars: 3};
+      state.settings = snap.val() || {dailyQuota: 2, penaltyStars: 3, lateCutoffHour: 20, lateCutoffMin: 30};
       onSharedDataChange();
     });
     dbRef('chores').on('value', snap=>{
@@ -736,6 +750,61 @@
       dot.remove();
     }
   }
+  // ---------- background customization ----------
+  function myThemeId(){
+    if(!state.me) return 'classic';
+    if(state.me.isParent){
+      const p = state.parents.find(p=>p.id===state.me.id);
+      return (p && p.bgTheme) || 'classic';
+    }
+    const k = state.kids.find(k=>k.id===state.me.id);
+    return (k && k.bgTheme) || 'classic';
+  }
+  function applyBackgroundTheme(){
+    const theme = BG_THEMES[myThemeId()] || BG_THEMES.classic;
+    if(theme.css){
+      document.body.style.background = theme.css;
+      document.body.style.backgroundAttachment = 'fixed';
+    } else {
+      document.body.style.background = '';
+      document.body.style.backgroundAttachment = '';
+    }
+  }
+  function openBackgroundPicker(){
+    const current = myThemeId();
+    const swatches = Object.keys(BG_THEMES).map(id=>{
+      const t = BG_THEMES[id];
+      const bg = t.css || 'linear-gradient(160deg, #2c3a36, #263330)';
+      const ring = id === current ? 'border:3px solid var(--gold);' : 'border:2px solid rgba(255,255,255,0.2);';
+      return `
+        <button data-action="pick-bg" data-id="${id}" style="width:78px;height:78px;border-radius:12px;${ring}background:${bg};margin:6px;cursor:pointer;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;">
+          <span style="font-size:10px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.6);font-family:'Inter',sans-serif;">${t.name}</span>
+        </button>`;
+    }).join('');
+    showModal({
+      title: "Pick your background",
+      body: `<div style="display:flex;flex-wrap:wrap;justify-content:center;">${swatches}</div>`,
+      okText: "Done",
+      cancelText: "Done",
+      onOk: async () => true
+    });
+  }
+  async function pickBackground(id){
+    if(!BG_THEMES[id] || !state.me) return;
+    if(state.me.isParent){
+      const p = state.parents.find(p=>p.id===state.me.id);
+      if(p) p.bgTheme = id;
+      await setShared('parents', state.parents);
+    } else {
+      const k = state.kids.find(k=>k.id===state.me.id);
+      if(k) k.bgTheme = id;
+      await setShared('kids', state.kids);
+    }
+    applyBackgroundTheme();
+    closeModal();
+    openBackgroundPicker(); // re-render with the new selection highlighted
+  }
+
   function updateNotifBtnState(){
     const btn = document.getElementById('notifBtn');
     if(!btn) return;
@@ -1238,6 +1307,7 @@
     setActiveTabButtons();
     renderBoard(); renderStars(); renderStore(); renderChat();
     updateNotifBtnState();
+    applyBackgroundTheme();
     listenForIncomingCalls();
     document.getElementById('boardTab').style.display='block';
     document.getElementById('starsTab').style.display='none';
@@ -1247,6 +1317,8 @@
 
   function switchUser(){
     state.me = null;
+    document.body.style.background = '';
+    document.body.style.backgroundAttachment = '';
     document.getElementById('shell').style.display = 'none';
     document.getElementById('picker').style.display = 'flex';
     renderPicker();
@@ -1860,11 +1932,11 @@
     renderBoard();
   }
   // ---------- late penalty ----------
-  const LATE_CUTOFF_HOUR = 20, LATE_CUTOFF_MIN = 30; // 8:30 PM, local device time
   function isPastLateCutoff(){
+    const hour = (state.settings && state.settings.lateCutoffHour != null) ? state.settings.lateCutoffHour : 20;
+    const min = (state.settings && state.settings.lateCutoffMin != null) ? state.settings.lateCutoffMin : 30;
     const now = new Date();
-    return (now.getHours() > LATE_CUTOFF_HOUR) ||
-           (now.getHours() === LATE_CUTOFF_HOUR && now.getMinutes() >= LATE_CUTOFF_MIN);
+    return (now.getHours() > hour) || (now.getHours() === hour && now.getMinutes() >= min);
   }
 
   async function markDone(id, photoDataUrl){
@@ -2015,6 +2087,12 @@
           <div style="font-size:11.5px;color:#5a4d33;margin-top:4px;">Set quota to 0 to turn this off. If a kid falls short one day, they get a warning (shown on their Stars tab + a chat note). Falling short again the very next day auto-deducts the star penalty — no need to do anything yourself.</div>
           <button class="btn-ghost" data-action="save-goals" style="width:100%;margin-top:8px;">Save quota</button>
         </div>
+        <label style="margin-top:18px;">Late cutoff time</label>
+        <div style="padding:10px;background:rgba(0,0,0,0.05);border-radius:8px;">
+          <input type="time" id="m_latecutoff" value="${String((state.settings && state.settings.lateCutoffHour!=null) ? state.settings.lateCutoffHour : 20).padStart(2,'0')}:${String((state.settings && state.settings.lateCutoffMin!=null) ? state.settings.lateCutoffMin : 30).padStart(2,'0')}">
+          <div style="font-size:11.5px;color:#5a4d33;margin-top:4px;">Chores marked done after this time count as "late" — half stars if approved.</div>
+          <button class="btn-ghost" data-action="save-cutoff" style="width:100%;margin-top:8px;">Save cutoff time</button>
+        </div>
       `,
       okText: "Add kid",
       cancelText: "Close",
@@ -2064,10 +2142,17 @@
   async function saveGoals(){
     const goal = parseInt(document.getElementById('m_weeklygoal').value,10) || 0;
     const penalty = parseInt(document.getElementById('m_penaltystars').value,10) || 0;
-    state.settings = {dailyQuota: goal, penaltyStars: penalty};
+    state.settings = {...(state.settings||{}), dailyQuota: goal, penaltyStars: penalty};
     await setShared('settings', state.settings);
     renderSettingsModal();
     renderStars();
+  }
+  async function saveCutoffTime(){
+    const val = document.getElementById('m_latecutoff').value; // "HH:MM"
+    const [h, m] = (val || '20:30').split(':').map(n => parseInt(n,10));
+    state.settings = {...(state.settings||{}), lateCutoffHour: isNaN(h)?20:h, lateCutoffMin: isNaN(m)?30:m};
+    await setShared('settings', state.settings);
+    renderSettingsModal();
   }
 
   // ---------- modal engine ----------
@@ -2143,6 +2228,8 @@
     if(action === 'switch-user') return switchUser();
     if(action === 'enable-notifications') return handleEnableNotifications();
     if(action === 'open-call-picker') return openCallPicker();
+    if(action === 'open-bg-picker') return openBackgroundPicker();
+    if(action === 'pick-bg') return pickBackground(id);
     if(action === 'start-call') return startCall(id);
     if(action === 'accept-call') return acceptCall();
     if(action === 'decline-call') return declineCall();
@@ -2170,6 +2257,7 @@
     if(action === 'add-parent-settings') return addParentFromSettings();
     if(action === 'remove-parent') return removeParent(id);
     if(action === 'save-goals') return saveGoals();
+    if(action === 'save-cutoff') return saveCutoffTime();
     if(action === 'new-reward') return openNewRewardForm();
     if(action === 'delete-reward') return deleteReward(id);
     if(action === 'redeem-reward') return redeemReward(id);
