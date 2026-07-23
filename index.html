@@ -190,13 +190,14 @@
     align-items:center;justify-content:center;padding:20px;z-index:50;
   }
   #modalBox{
-    background:var(--paper);color:#2c2418;border-radius:14px;padding:22px;width:100%;max-width:380px;
+    background:var(--paper);color:#2c2418;border-radius:14px;padding:20px;width:100%;max-width:380px;
     box-shadow:0 20px 40px rgba(0,0,0,0.5);
+    max-height:88vh;overflow-y:auto;
   }
-  #modalBox h3{font-family:'Caveat',cursive;font-size:26px;margin:0 0 12px;}
-  #modalBox label{display:block;font-size:12.5px;font-weight:600;margin:12px 0 5px;color:#5a4d33;}
-  #modalBox input[type=text], #modalBox input[type=number], #modalBox input[type=password], #modalBox select{
-    width:100%;padding:10px 12px;border-radius:8px;border:1px solid #cbb98a;font-size:14px;font-family:'Inter',sans-serif;
+  #modalBox h3{font-family:'Caveat',cursive;font-size:24px;margin:0 0 8px;}
+  #modalBox label{display:block;font-size:12px;font-weight:600;margin:8px 0 4px;color:#5a4d33;}
+  #modalBox input[type=text], #modalBox input[type=number], #modalBox input[type=password], #modalBox input[type=time], #modalBox select{
+    width:100%;padding:8px 10px;border-radius:8px;border:1px solid #cbb98a;font-size:13.5px;font-family:'Inter',sans-serif;
   }
   #modalBox .row{display:flex;gap:10px;}
   #modalBox .row > div{flex:1;}
@@ -205,9 +206,9 @@
   .modal-cancel{background:rgba(0,0,0,0.08);color:#2c2418;}
   .modal-ok{background:#2c3a36;color:var(--paper);}
   .modal-error{color:#b3261e;font-size:12.5px;margin-top:8px;min-height:14px;}
-  #kidList{display:flex;flex-direction:column;gap:6px;margin-top:6px;max-height:160px;overflow-y:auto;}
-  #kidList .kidrow{display:flex;align-items:center;gap:8px;font-size:13.5px;background:rgba(0,0,0,0.05);padding:6px 8px;border-radius:8px;}
-  #kidList .kidrow button{margin-left:auto;background:none;border:none;color:#b3261e;font-size:12px;cursor:pointer;}
+  #kidList, #parentList{display:flex;flex-direction:column;gap:5px;margin-top:6px;max-height:130px;overflow-y:auto;}
+  #kidList .kidrow, #parentList .kidrow{display:flex;align-items:center;gap:8px;font-size:13px;background:rgba(0,0,0,0.05);padding:5px 8px;border-radius:8px;}
+  #kidList .kidrow button, #parentList .kidrow button{margin-left:auto;background:none;border:none;color:#b3261e;font-size:11.5px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;}
 
   /* ---------- Video call overlay ---------- */
   #callOverlay{
@@ -2063,35 +2064,35 @@
       body: `
         <label>Parents</label>
         <div id="parentList">${parentRows}</div>
-        <div style="margin-top:8px;margin-bottom:16px;padding:10px;background:rgba(0,0,0,0.05);border-radius:8px;">
-          <input type="text" id="m_newparent_settings" placeholder="Name (e.g. Dad)" maxlength="30" style="margin-bottom:6px;">
+        <div style="margin-top:6px;margin-bottom:10px;padding:8px;background:rgba(0,0,0,0.05);border-radius:8px;">
+          <input type="text" id="m_newparent_settings" placeholder="Name (e.g. Dad)" maxlength="30" style="margin-bottom:5px;">
           <div class="row">
             <div><input type="password" id="m_newparent_pin" placeholder="PIN" inputmode="numeric" maxlength="6"></div>
             <div><input type="password" id="m_newparent_pin2" placeholder="Confirm PIN" inputmode="numeric" maxlength="6"></div>
           </div>
-          <button class="btn-ghost" data-action="add-parent-settings" style="width:100%;margin-top:8px;">Add parent</button>
-          <div class="modal-error" id="m_perr"></div>
+          <button class="btn-ghost" data-action="add-parent-settings" style="width:100%;margin-top:6px;padding:7px;">Add parent</button>
+          <div class="modal-error" id="m_perr" style="margin-top:4px;min-height:0;"></div>
         </div>
         <label>Kids</label>
         <div id="kidList">${kidRows}</div>
-        <div class="row" style="margin-top:10px;">
+        <div class="row" style="margin-top:6px;">
           <div><input type="text" id="m_newkid" placeholder="Add a kid's name" maxlength="30"></div>
         </div>
-        <div class="modal-error" id="m_err"></div>
-        <label style="margin-top:18px;">Daily chore quota</label>
-        <div style="padding:10px;background:rgba(0,0,0,0.05);border-radius:8px;">
+        <div class="modal-error" id="m_err" style="margin-top:4px;min-height:0;"></div>
+        <label style="margin-top:12px;">Daily chore quota</label>
+        <div style="padding:8px;background:rgba(0,0,0,0.05);border-radius:8px;">
           <div class="row">
             <div><input type="number" id="m_weeklygoal" min="0" value="${(state.settings && state.settings.dailyQuota) || 0}" placeholder="Chores/day"></div>
             <div><input type="number" id="m_penaltystars" min="0" value="${(state.settings && state.settings.penaltyStars) || 0}" placeholder="Star penalty"></div>
           </div>
-          <div style="font-size:11.5px;color:#5a4d33;margin-top:4px;">Set quota to 0 to turn this off. If a kid falls short one day, they get a warning (shown on their Stars tab + a chat note). Falling short again the very next day auto-deducts the star penalty — no need to do anything yourself.</div>
-          <button class="btn-ghost" data-action="save-goals" style="width:100%;margin-top:8px;">Save quota</button>
+          <div style="font-size:10.5px;color:#5a4d33;margin-top:4px;line-height:1.3;">0 = off. Missed a day → warning. Missed again → auto-deducts stars.</div>
+          <button class="btn-ghost" data-action="save-goals" style="width:100%;margin-top:6px;padding:7px;">Save quota</button>
         </div>
-        <label style="margin-top:18px;">Late cutoff time</label>
-        <div style="padding:10px;background:rgba(0,0,0,0.05);border-radius:8px;">
+        <label style="margin-top:12px;">Late cutoff time</label>
+        <div style="padding:8px;background:rgba(0,0,0,0.05);border-radius:8px;">
           <input type="time" id="m_latecutoff" value="${String((state.settings && state.settings.lateCutoffHour!=null) ? state.settings.lateCutoffHour : 20).padStart(2,'0')}:${String((state.settings && state.settings.lateCutoffMin!=null) ? state.settings.lateCutoffMin : 30).padStart(2,'0')}">
-          <div style="font-size:11.5px;color:#5a4d33;margin-top:4px;">Chores marked done after this time count as "late" — half stars if approved.</div>
-          <button class="btn-ghost" data-action="save-cutoff" style="width:100%;margin-top:8px;">Save cutoff time</button>
+          <div style="font-size:10.5px;color:#5a4d33;margin-top:4px;line-height:1.3;">Done after this time = "late" — half stars if approved.</div>
+          <button class="btn-ghost" data-action="save-cutoff" style="width:100%;margin-top:6px;padding:7px;">Save cutoff time</button>
         </div>
       `,
       okText: "Add kid",
