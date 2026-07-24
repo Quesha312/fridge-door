@@ -166,15 +166,48 @@
   }
 
   /* ---------- Stars tab ---------- */
-  .leaderboard{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
-  .lb-row{
-    background:var(--bg2);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
-    border:1px solid rgba(255,255,255,0.06);
-  }
-  .lb-rank{font-family:'Caveat',cursive;font-size:22px;color:var(--chalk-dim);width:22px;text-align:center;}
-  .lb-name{flex:1;font-weight:600;font-size:14.5px;}
-  .lb-stars{font-family:'Caveat',cursive;font-size:26px;color:var(--gold);font-weight:700;}
+  .leaderboard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
 
+/* Leaderboard Row */
+.lb-row {
+  background: rgba(255,255,255,0.08);   /* visible on dark UI */
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  border: 1px solid rgba(255,255,255,0.12); /* stronger outline */
+}
+
+/* Rank number */
+.lb-rank {
+  font-family: 'Caveat', cursive;
+  font-size: 22px;
+  color: var(--chalk-dim);
+  width: 22px;
+  text-align: center;
+}
+
+/* Name */
+.lb-name {
+  flex: 1;
+  font-weight: 600;
+  font-size: 14.5px;
+}
+
+/* Stars */
+.lb-stars {
+  font-family: 'Caveat', cursive;
+  font-size: 26px;
+  color: var(--gold);
+  font-weight: 700;
+}
   /* ---------- Chat ---------- */
   #chatPanel{display:flex;flex-direction:column;height:calc(100vh - 190px);}
   #chatMessages{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:8px 2px 12px;}
