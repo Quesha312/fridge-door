@@ -1,0 +1,2401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>The Family Vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1A0B2E;
+    --surface:#2B1152;
+    --surface2:#3B1876;
+    --gold:#FFC93C;
+    --gold-dim:#F2A900;
+    --coral:#FF3D71;
+    --ivory:#FFF7F0;
+    --muted:#C3A9E8;
+    --good:#2EF2A6;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ivory);
+    font-family:'Work Sans',sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(255,201,60,0.10), transparent 40%),
+      radial-gradient(circle at 90% 90%, rgba(255,61,113,0.10), transparent 45%);
+  }
+  #app{
+    width:100%;
+    max-width:480px;
+    min-height:100vh;
+    padding:20px 18px 40px;
+    display:flex;
+    flex-direction:column;
+  }
+  h1,h2,h3{font-family:'Fraunces',serif;font-weight:700;margin:0 0 4px;}
+  .brand{
+    text-align:center;
+    margin-bottom:22px;
+  }
+  .brand .mark{
+    font-size:11px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:var(--gold);
+    font-family:'Space Mono',monospace;
+  }
+  .brand h1{font-size:30px;color:var(--ivory);}
+  .card{
+    background:var(--surface);
+    border-radius:16px;
+    padding:20px;
+    margin-bottom:14px;
+    border:1px solid rgba(255,255,255,0.06);
+    box-shadow:0 8px 24px rgba(0,0,0,0.25);
+  }
+  .muted{color:var(--muted);font-size:14px;}
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;letter-spacing:.3px;}
+  input[type=text], textarea{
+    width:100%;
+    background:var(--surface2);
+    border:1px solid rgba(255,255,255,0.1);
+    color:var(--ivory);
+    padding:12px 14px;
+    border-radius:10px;
+    font-size:16px;
+    font-family:'Work Sans',sans-serif;
+    margin-bottom:14px;
+  }
+  textarea{min-height:90px;resize:vertical;}
+  .word-box-input{margin-bottom:8px;padding:10px 14px;}
+  #wordBoxesContainer{margin-bottom:6px;}
+  input:focus, textarea:focus, button:focus{outline:2px solid var(--gold);outline-offset:2px;}
+  button{
+    width:100%;
+    padding:14px 16px;
+    border-radius:10px;
+    border:none;
+    font-size:16px;
+    font-weight:600;
+    font-family:'Work Sans',sans-serif;
+    cursor:pointer;
+    margin-bottom:10px;
+    transition:transform .08s ease;
+  }
+  button:active{transform:scale(0.98);}
+  .btn-primary{background:var(--gold);color:#20231A;}
+  .btn-secondary{background:var(--surface2);color:var(--ivory);border:1px solid rgba(255,255,255,0.15);}
+  .btn-coral{background:var(--coral);color:#2A1310;}
+  .btn-small{width:auto;padding:8px 14px;font-size:13px;margin:0;}
+  .row{display:flex;gap:10px;}
+  .row > *{flex:1;}
+  .keytag{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:linear-gradient(160deg,#FFC93C,#F2A900);
+    color:#2A2010;
+    font-family:'Space Mono',monospace;
+    font-weight:700;
+    font-size:22px;
+    letter-spacing:4px;
+    padding:10px 18px;
+    border-radius:10px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+  }
+  .keytag::before{content:'🔑';font-size:16px;}
+  .center{text-align:center;}
+  .players-list{list-style:none;padding:0;margin:0;}
+  .players-list li{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 12px;background:var(--surface2);border-radius:8px;margin-bottom:8px;
+  }
+  .players-list .score{font-family:'Space Mono',monospace;color:var(--gold);font-weight:700;}
+  .host-badge{font-size:10px;background:var(--gold);color:#20231A;padding:2px 6px;border-radius:5px;margin-left:6px;letter-spacing:.5px;}
+  .timer-ring{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;margin:6px auto 16px;
+  }
+  .timer-num{font-family:'Space Mono',monospace;font-size:32px;font-weight:700;color:var(--gold);margin-top:-72px;}
+  .prompt-box{
+    background:var(--surface2);
+    border-left:4px solid var(--gold);
+    padding:16px;
+    border-radius:8px;
+    font-family:'Fraunces',serif;
+    font-size:19px;
+    line-height:1.4;
+    margin-bottom:16px;
+  }
+  .blank{color:var(--coral);font-weight:700;}
+  .grid-boggle{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+    max-width:280px;
+    margin:0 auto 18px;
+  }
+  .grid-boggle .cell{
+    aspect-ratio:1;
+    background:var(--surface2);
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Fraunces',serif;
+    font-size:24px;font-weight:700;
+    color:var(--ivory);
+  }
+  .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .menu-grid button{margin-bottom:0;font-size:14px;padding:16px 10px;}
+  .playing-card{
+    display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+    width:52px;height:74px;border-radius:8px;background:var(--ivory);color:#1A0B2E;
+    font-family:'Space Mono',monospace;font-weight:700;font-size:18px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.35);margin:3px;
+  }
+  .playing-card.red{color:var(--coral);}
+  .playing-card.hidden{background:linear-gradient(160deg,#3B1876,#2B1152);color:transparent;border:2px solid var(--gold);}
+  .card-row{display:flex;flex-wrap:wrap;justify-content:center;margin-bottom:10px;}
+  .hand-value{font-family:'Space Mono',monospace;color:var(--gold);font-weight:700;font-size:15px;text-align:center;margin-bottom:12px;}
+  .tag{
+    display:inline-block;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--gold);font-family:'Space Mono',monospace;margin-bottom:8px;
+  }
+  .submission-item{
+    background:var(--surface2);padding:12px 14px;border-radius:8px;margin-bottom:8px;
+    display:flex;justify-content:space-between;align-items:center;cursor:pointer;
+    border:2px solid transparent;
+  }
+  .submission-item.selected{border-color:var(--gold);}
+  .submission-item.correct{border-color:var(--good);background:rgba(127,184,138,0.15);}
+  .submission-item.wrong{opacity:0.6;}
+  .divider{height:1px;background:rgba(255,255,255,0.08);margin:16px 0;}
+  .clue-log{list-style:none;padding:0;margin:0 0 14px;}
+  .clue-log li{
+    font-family:'Fraunces',serif;font-size:18px;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,0.1);
+  }
+  .clue-log li .idx{color:var(--gold);font-family:'Space Mono',monospace;font-size:13px;margin-right:8px;}
+  .error-text{color:var(--coral);font-size:13px;margin:-8px 0 12px;}
+  .footer-note{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;}
+  .scoreboard-podium{text-align:center;margin-bottom:6px;}
+  .scoreboard-podium .place1{font-size:22px;color:var(--gold);font-family:'Fraunces',serif;font-weight:700;}
+  a{color:var(--gold);}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import {
+  getDatabase, ref, get, set, query,
+  orderByKey, startAt, endAt
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAfy1b0DCW4nDqounTb7SoAvrbP-oM_ZVA",
+  authDomain: "family-vault-game.firebaseapp.com",
+  projectId: "family-vault-game",
+  storageBucket: "family-vault-game.firebasestorage.app",
+  messagingSenderId: "60330423048",
+  appId: "1:60330423048:web:d420b8a80e89349595f2bd",
+  databaseURL: "https://family-vault-game-default-rtdb.firebaseio.com"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+
+/* ============ CONTENT BANKS ============ */
+const TRIVIA = [
+  {q:"What planet is known as the Red Planet?", a:["mars"]},
+  {q:"How many strings does a standard guitar have?", a:["6","six"]},
+  {q:"What ocean is the largest on Earth?", a:["pacific"]},
+  {q:"What's the capital of Australia?", a:["canberra"]},
+  {q:"How many bones are in the adult human body?", a:["206"]},
+  {q:"What metal is liquid at room temperature?", a:["mercury"]},
+  {q:"What year did the Titanic sink?", a:["1912"]},
+  {q:"What's the smallest prime number?", a:["2","two"]},
+  {q:"What language has the most native speakers worldwide?", a:["mandarin","chinese"]},
+  {q:"What's the tallest mountain in the world?", a:["everest"]},
+  {q:"How many colors are in a rainbow?", a:["7","seven"]},
+  {q:"What's the largest organ in the human body?", a:["skin"]},
+  {q:"What is the chemical symbol for gold?", a:["au"]},
+  {q:"How many continents are there?", a:["7","seven"]},
+  {q:"What is the largest planet in our solar system?", a:["jupiter"]},
+  {q:"What is the freezing point of water in Celsius?", a:["0","zero"]},
+  {q:"How many players are on a soccer team on the field?", a:["11","eleven"]},
+  {q:"What is the capital of Japan?", a:["tokyo"]},
+  {q:"What gas do plants absorb from the atmosphere?", a:["carbon dioxide","co2"]},
+  {q:"How many sides does a hexagon have?", a:["6","six"]},
+  {q:"What is the largest mammal in the world?", a:["blue whale","whale"]},
+  {q:"What year did World War II end?", a:["1945"]},
+  {q:"What is the hardest natural substance on Earth?", a:["diamond"]},
+  {q:"What's the capital of France?", a:["paris"]},
+  {q:"How many hearts does an octopus have?", a:["3","three"]},
+  {q:"What planet is closest to the sun?", a:["mercury"]},
+  {q:"What is the tallest animal in the world?", a:["giraffe"]},
+  {q:"How many strings does a standard violin have?", a:["4","four"]},
+  {q:"What is the currency of Japan?", a:["yen"]},
+  {q:"What is the largest hot desert in the world?", a:["sahara"]},
+  {q:"What is the smallest country in the world by area?", a:["vatican city","vatican"]},
+  {q:"What is the main ingredient in guacamole?", a:["avocado"]},
+  {q:"What is the tallest waterfall in the world?", a:["angel falls"]},
+  {q:"How many minutes are in a full day?", a:["1440"]},
+  {q:"What organ pumps blood through the body?", a:["heart"]},
+  {q:"What is the longest river in the world?", a:["nile"]},
+  {q:"How many teeth does an adult human typically have?", a:["32"]},
+  {q:"What is the capital of Italy?", a:["rome"]},
+  {q:"What planet is famous for its rings?", a:["saturn"]},
+  {q:"How many strings does a standard ukulele have?", a:["4","four"]},
+  {q:"What is the capital of Germany?", a:["berlin"]},
+  {q:"How many legs does a spider have?", a:["8","eight"]},
+  {q:"What is the largest ocean animal?", a:["blue whale","whale"]},
+  {q:"What is the capital of Canada?", a:["ottawa"]},
+  {q:"How many strings are on a standard harp, roughly?", a:["47"]},
+  {q:"What is the tallest building in the world?", a:["burj khalifa"]},
+  {q:"What is the study of weather called?", a:["meteorology"]},
+  {q:"How many wheels does a standard bicycle have?", a:["2","two"]},
+  {q:"What is the largest bird in the world?", a:["ostrich"]},
+  {q:"What color do you get by mixing blue and yellow?", a:["green"]},
+  {q:"What is the capital of Spain?", a:["madrid"]},
+  {q:"What is the capital of Russia?", a:["moscow"]},
+  {q:"What is the capital of Egypt?", a:["cairo"]},
+  {q:"What is the capital of China?", a:["beijing"]},
+  {q:"What is the capital of Brazil?", a:["brasilia"]},
+  {q:"What is the capital of South Korea?", a:["seoul"]},
+  {q:"What is the capital of Mexico?", a:["mexico city"]},
+  {q:"What is the capital of the United Kingdom?", a:["london"]},
+  {q:"What is the capital of Greece?", a:["athens"]},
+  {q:"What is the capital of Portugal?", a:["lisbon"]},
+  {q:"How many colors does a standard rainbow have?", a:["7","seven"]},
+  {q:"How many players are on a basketball team on the court?", a:["5","five"]},
+  {q:"How many players are on a volleyball team on the court?", a:["6","six"]},
+  {q:"What instrument has 88 keys?", a:["piano"]},
+  {q:"What is the fastest land animal?", a:["cheetah"]},
+  {q:"What is the largest species of shark?", a:["whale shark"]},
+  {q:"What is the smallest planet in our solar system?", a:["mercury"]},
+  {q:"What is the largest planet's most famous storm called?", a:["great red spot"]},
+  {q:"What is the national bird of the United States?", a:["bald eagle","eagle"]},
+  {q:"What is the tallest type of grass?", a:["bamboo"]},
+  {q:"How many chambers does the human heart have?", a:["4","four"]},
+  {q:"What is the process by which plants make food called?", a:["photosynthesis"]},
+  {q:"What planet has the most moons discovered so far?", a:["saturn"]},
+  {q:"What is the largest island in the world?", a:["greenland"]},
+  {q:"What is the smallest bone in the human body?", a:["stapes"]},
+  {q:"How many sides does a stop sign have?", a:["8","eight"]},
+  {q:"What is the fastest fish in the ocean?", a:["sailfish"]},
+  {q:"How many strings does a standard banjo have?", a:["5","five"]},
+  {q:"What is the largest species of penguin?", a:["emperor penguin"]},
+  {q:"What is the tallest breed of dog?", a:["great dane"]},
+  {q:"How many bones are in a shark's body?", a:["0","zero"]},
+  {q:"What is the largest rodent in the world?", a:["capybara"]},
+  {q:"What color is a giraffe's tongue?", a:["blue","black","purple"]},
+  {q:"What is the study of earthquakes called?", a:["seismology"]},
+  {q:"How many degrees are in a right angle?", a:["90","ninety"]},
+  {q:"How many degrees are in a full circle?", a:["360"]},
+  {q:"What is the world's most spoken second language?", a:["english"]},
+  {q:"What is the largest coral reef system in the world?", a:["great barrier reef"]},
+  {q:"How many time zones does Russia span?", a:["11","eleven"]},
+  {q:"What gas makes up most of Earth's atmosphere?", a:["nitrogen"]},
+  {q:"What is the closest star to Earth?", a:["the sun","sun"]},
+  {q:"How many bones does a newborn baby have, roughly?", a:["300"]},
+  {q:"What is the world's tallest tree species?", a:["redwood"]},
+  {q:"How many strikes make an out in baseball?", a:["3","three"]},
+  {q:"What is the longest bone in the human body?", a:["femur"]},
+  {q:"What planet takes the longest to orbit the sun?", a:["neptune"]},
+  {q:"How many muscles does it take to smile, roughly?", a:["12"]},
+  {q:"What is the world's heaviest organ?", a:["liver"]},
+  {q:"What is the loudest animal on Earth?", a:["blue whale","whale"]},
+  {q:"How many humps does a dromedary camel have?", a:["1","one"]}
+];
+const BLUFF = [
+  {fact:"The state of ____ is the only U.S. state whose name has just one syllable.", answer:"Maine"},
+  {fact:"A group of flamingos is called a ____.", answer:"flamboyance"},
+  {fact:"Honey never truly ____ if stored properly — jars found in ancient tombs are still edible.", answer:"spoils"},
+  {fact:"Octopuses have ____ hearts.", answer:"three"},
+  {fact:"A bolt of lightning is hotter than the surface of the ____.", answer:"sun"},
+  {fact:"Bananas are naturally slightly ____.", answer:"radioactive"},
+  {fact:"The dot over a lowercase 'i' has an actual name: a ____.", answer:"tittle"},
+  {fact:"Wombat droppings are famously shaped like a ____.", answer:"cube"},
+  {fact:"It rains ____ on Neptune and Uranus.", answer:"diamonds"},
+  {fact:"A single strand of spaghetti is called a ____.", answer:"spaghetto"},
+  {fact:"The shortest war in recorded history lasted about ____ minutes.", answer:"38"},
+  {fact:"Sea otters hold ____ while sleeping so they don't drift apart.", answer:"hands"},
+  {fact:"A shrimp's heart is located in its ____.", answer:"head"},
+  {fact:"A group of crows is called a ____.", answer:"murder"},
+  {fact:"Sharks have existed on Earth longer than ____ have.", answer:"trees"},
+  {fact:"Cleopatra lived closer in time to the moon landing than to the building of the ____.", answer:"pyramids"},
+  {fact:"Oxford University is older than the ____ Empire.", answer:"Aztec"},
+  {fact:"There are more possible chess games than there are ____ in the observable universe.", answer:"atoms"},
+  {fact:"The unicorn is the official national animal of ____.", answer:"Scotland"},
+  {fact:"A day on Venus is longer than its entire ____.", answer:"year"},
+  {fact:"Some of Pringles inventor Fredric Baur's ashes were buried inside a ____.", answer:"Pringles can"},
+  {fact:"Hot water can sometimes freeze faster than cold water — this is called the ____ effect.", answer:"Mpemba"},
+  {fact:"An octopus can squeeze through any opening bigger than its ____.", answer:"beak"},
+  {fact:"Cows have been shown to form best friendships and get stressed when ____.", answer:"separated"},
+  {fact:"Butterflies taste food using their ____.", answer:"feet"},
+  {fact:"A single average cumulus cloud can weigh over a million ____.", answer:"pounds"},
+  {fact:"Polar bears actually have ____ skin underneath their white fur.", answer:"black"},
+  {fact:"The trampoline gets its name from the Spanish word for ____.", answer:"diving board"},
+  {fact:"Venus, not Mercury, is the ____ planet in our solar system.", answer:"hottest"},
+  {fact:"Flamingos can turn a lake pink because of the ____ they eat.", answer:"shrimp"},
+  {fact:"Astronauts can temporarily grow up to two ____ taller in space.", answer:"inches"},
+  {fact:"Koalas have fingerprints so similar to ____ that they've contaminated crime scenes.", answer:"humans"},
+  {fact:"A crocodile cannot stick out its ____.", answer:"tongue"},
+  {fact:"The inventor of the Frisbee had his ashes molded into ____ after he died.", answer:"Frisbees"},
+  {fact:"Starfish do not have ____.", answer:"brains"},
+  {fact:"A group of pandas is called an ____.", answer:"embarrassment"},
+  {fact:"The Eiffel Tower can grow over 6 inches taller in the ____.", answer:"summer"},
+  {fact:"Elephants are one of the only animals that can't ____.", answer:"jump"},
+  {fact:"A jiffy is an actual unit of time equal to about ____ of a second.", answer:"1/100th"},
+  {fact:"Wearing headphones for just an hour can increase the bacteria in your ____ significantly.", answer:"ear"},
+  {fact:"A rhinoceros's horn is made of the same material as human ____.", answer:"hair"},
+  {fact:"The inventor of the microwave oven discovered it after a candy bar melted in his ____.", answer:"pocket"},
+  {fact:"Scotland's national animal, the unicorn, was chosen partly because it was a symbol of ____ in medieval myths.", answer:"purity"},
+  {fact:"Wombats are one of the only animals that produce ____-shaped droppings.", answer:"cube"},
+  {fact:"A group of owls is called a ____.", answer:"parliament"},
+  {fact:"The Mona Lisa has no ____.", answer:"eyebrows"},
+  {fact:"Peanuts are not actually nuts — they're ____.", answer:"legumes"},
+  {fact:"A snail can sleep for up to ____ years.", answer:"three"},
+  {fact:"Tigers have striped ____, not just striped fur.", answer:"skin"},
+  {fact:"The average person walks past ____ murderers in their lifetime, according to a popular (unverifiable) claim.", answer:"36"},
+  {fact:"Cats can't taste ____.", answer:"sweetness"},
+  {fact:"There's a species of jellyfish that is considered biologically ____.", answer:"immortal"},
+  {fact:"The world's oldest known piece of chewing gum is over ____ years old.", answer:"9000"},
+  {fact:"A hummingbird's heart can beat over ____ times per minute.", answer:"1200"},
+  {fact:"The inventor of the Segway died by riding one off a ____.", answer:"cliff"},
+  {fact:"Almonds are a member of the ____ family.", answer:"peach"},
+  {fact:"Human bones are about as strong as ____.", answer:"steel"},
+  {fact:"It's physically impossible for most people to ____ with their eyes open.", answer:"sneeze"},
+  {fact:"The King of Hearts is the only king in a standard card deck without a ____.", answer:"mustache"},
+  {fact:"A crocodile's tongue is attached and cannot ____.", answer:"move"},
+  {fact:"The Statue of Liberty's official nickname is 'Liberty Enlightening the ____.'", answer:"World"},
+  {fact:"Some cheeses like Casu Marzu are intentionally left to be ____ by live insect larvae.", answer:"infested"},
+  {fact:"A group of jellyfish is called a ____.", answer:"smack"},
+  {fact:"The world's largest snowflake on record was reportedly wider than a ____.", answer:"frisbee"}
+];
+const PREFIXES = ["PRE","UN","RE","DIS","OVER","SUPER","MIS","OUT","SUB","INTER","ANTI","NON","SEMI","TRANS","UNDER","FORE","POST","PRO","MULTI","MICRO","AUTO","BI","TRI","MONO","ULTRA","DE","EX","MID","CO","HYPER","EN","EM","EPI","EQUI","EXTRA","IN","IM","IL","IR","INFRA","INTRA","MAL","NEO","OB","OMNI","PAN","PER","PERI","POLY","RETRO","SYN","UNI","HOMO","HETERO","PARA","CONTRA","CIRCUM","AB","AD"];
+const WORDBANK_WORDS = ["ADVENTURE","CELEBRATION","STRAWBERRY","INFORMATION","SKATEBOARD","THUNDERSTORM","BASKETBALL","CHOCOLATE","NEIGHBORHOOD","VACATION","WATERMELON","ASTRONAUT","PHOTOGRAPH","TELEVISION","MOUNTAINEER","CARDBOARD","FIREFIGHTER","UNDERSTAND","KEYBOARD","HOSPITAL","ELEPHANT","RESTAURANT","BUTTERFLY","DINOSAUR","HELICOPTER","PINEAPPLE","MICROWAVE","NEWSPAPER","PLAYGROUND","SUBMARINE","CATERPILLAR","REFRIGERATOR","AMBULANCE","ORCHESTRA","VOLCANO","BACKPACK","CROCODILE","LIGHTHOUSE","TRAMPOLINE","CHANDELIER","EARTHQUAKE","GRASSHOPPER","HAMBURGER","JELLYFISH","KANGAROO","LEMONADE","MOTORCYCLE","PARACHUTE","QUICKSAND","RAINFOREST","SNOWFLAKE","TOOTHBRUSH","UMBRELLA","WHEELBARROW","XYLOPHONE","YESTERDAY","ZUCCHINI","ARCHITECTURE","BLUEBERRY","CINNAMON"];
+const CLUE_WORDS = ["GUITAR","VOLCANO","PENGUIN","BICYCLE","LIBRARY","SANDWICH","TORNADO","PIRATE","CAMERA","BLANKET","DOLPHIN","CASTLE","ROCKET","WAFFLE","SPIDER","ANCHOR","CANDLE","JACKET","TRUMPET","IGLOO","COMPASS","DRAGON","PRETZEL","LANTERN","TURTLE","BALLOON","VOLLEYBALL","CACTUS","TELESCOPE","SNOWMAN","OCTOPUS","PYRAMID","SCARECROW","LIGHTHOUSE","MERMAID","KANGAROO","UMBRELLA","BACKPACK","SKELETON","WIZARD","FIREFLY","POPCORN","HAMMOCK","SUBMARINE","PARROT","RAINBOW","GLACIER","TREASURE","WINDMILL","ACCORDION"];
+const LETTER_POOL = "EEEEEEEEEEEAAAAAAAAAIIIIIIIIOOOOOOOONNNNNNRRRRRRTTTTTTLLLLSSSSUUUUDDDDGGGBBCCMMPPFFHHVVWWYYKJXQZ";
+
+/* ============ CARD GAME HELPERS ============ */
+const CARD_RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const CARD_SUITS = ['♠','♥','♦','♣'];
+function makeShuffledDeck(){
+  const deck = [];
+  for(const s of CARD_SUITS) for(const r of CARD_RANKS) deck.push(r+s);
+  for(let i=deck.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [deck[i],deck[j]] = [deck[j],deck[i]];
+  }
+  return deck;
+}
+function cardRank(card){ return card.slice(0,-1); }
+function blackjackCardValue(card){
+  const r = cardRank(card);
+  if(r==='A') return 11;
+  if(r==='J'||r==='Q'||r==='K') return 10;
+  return parseInt(r,10);
+}
+function blackjackHandValue(hand){
+  let sum = hand.reduce((a,c)=>a+blackjackCardValue(c),0);
+  let aces = hand.filter(c=>cardRank(c)==='A').length;
+  while(sum>21 && aces>0){ sum -= 10; aces--; }
+  return sum;
+}
+function warCardStrength(card){
+  return CARD_RANKS.indexOf(cardRank(card)); // higher index = higher rank, Ace highest
+}
+const WAR_FLIPS_PER_GAME = 8;
+
+const EMOJI = [
+  {q:"🍕🧀", a:["pizza"]},
+  {q:"🐝🎥", a:["bee movie"]},
+  {q:"🦁👑", a:["lion king","the lion king"]},
+  {q:"❄️👸👗", a:["frozen"]},
+  {q:"🐠🔎", a:["finding nemo"]},
+  {q:"🕸️🕷️👨", a:["spiderman","spider-man"]},
+  {q:"🦇👨", a:["batman"]},
+  {q:"🌊👩🏽‍🦱⛵", a:["moana"]},
+  {q:"🏠🎈⬆️", a:["up"]},
+  {q:"🍫🏭👦", a:["charlie and the chocolate factory"]},
+  {q:"🐍🪜🎲", a:["snakes and ladders"]},
+  {q:"🌧️🐱🐶", a:["raining cats and dogs"]},
+  {q:"🥧🌌", a:["pie in the sky"]},
+  {q:"🐘🏠", a:["elephant in the room"]},
+  {q:"🎂😌", a:["piece of cake"]},
+  {q:"🦵💥", a:["break a leg"]},
+  {q:"🐔🥚", a:["chicken or the egg","chicken and the egg"]},
+  {q:"💍👑🧙", a:["lord of the rings"]},
+  {q:"🚢🧊💔", a:["titanic"]},
+  {q:"🦈🌊", a:["jaws"]},
+  {q:"🧙‍♂️⚡👓", a:["harry potter"]},
+  {q:"🐭🏰👠", a:["cinderella"]},
+  {q:"🌟⚔️🚀", a:["star wars"]},
+  {q:"🍯🐻", a:["winnie the pooh"]},
+  {q:"🐉🎓", a:["how to train your dragon"]},
+  {q:"🚗⚡🏁", a:["cars"]},
+  {q:"🐜🎬", a:["a bug's life","antz"]},
+  {q:"🧸🌟", a:["toy story"]},
+  {q:"🐧🎶", a:["happy feet"]},
+  {q:"🦖🏝️", a:["jurassic park"]},
+  {q:"👻🚫", a:["ghostbusters"]},
+  {q:"🍟🍔👑", a:["burger king"]},
+  {q:"🌙🐺", a:["twilight"]},
+  {q:"🕰️⏪", a:["back to the future"]},
+  {q:"🤖❤️🌱", a:["wall-e","walle"]},
+  {q:"🎈🏠👵", a:["up"]},
+  {q:"🐝🍯🎥", a:["bee movie"]},
+  {q:"👑❄️⛄", a:["frozen"]},
+  {q:"🧙‍♀️🏠🌪️", a:["wizard of oz"]},
+  {q:"🐒🍌🚀", a:["planet of the apes"]},
+  {q:"🚀🌕👨‍🚀", a:["apollo 13","moon landing"]},
+  {q:"🥊🐀", a:["rocky"]},
+  {q:"🎩🐰", a:["alice in wonderland"]},
+  {q:"🌶️🔥👄", a:["hot sauce","spicy"]},
+  {q:"🐦‍⬛📖🕯️", a:["harry potter"]},
+  {q:"🌭🏈", a:["hot dog"]},
+  {q:"🐛🦋", a:["the very hungry caterpillar"]},
+  {q:"🐷🕸️📖", a:["charlotte's web"]},
+  {q:"🍦🚚🎶", a:["ice cream truck"]},
+  {q:"🦶💙", a:["cold feet"]},
+  {q:"🥶🐔", a:["chicken out"]},
+  {q:"🌧️💰", a:["raining money"]},
+  {q:"🐝🧠", a:["spelling bee"]},
+  {q:"🌙🔵", a:["once in a blue moon"]},
+  {q:"🍿🎬", a:["movie night"]},
+  {q:"🐢🐇🏁", a:["the tortoise and the hare"]},
+  {q:"🦢🩰", a:["swan lake"]},
+  {q:"🍫🎩🍭", a:["willy wonka"]},
+  {q:"🐺🧢👵", a:["little red riding hood"]},
+  {q:"🥛🍪", a:["milk and cookies"]},
+  {q:"🌊🏄", a:["surfing"]},
+  {q:"🎃👻🍬", a:["halloween"]},
+  {q:"🦃🍽️", a:["thanksgiving"]},
+  {q:"🎄🎅", a:["christmas"]},
+  {q:"🐰🥚", a:["easter"]},
+  {q:"🎆🇺🇸", a:["fourth of july","independence day"]},
+  {q:"💘🌹", a:["valentine's day","valentines day"]}
+];
+const WOULD_YOU_RATHER = [
+  {a:"Always have to sing instead of talk", b:"Always have to dance everywhere you walk"},
+  {a:"Give up your phone for a month", b:"Give up TV and streaming for a month"},
+  {a:"Be able to fly", b:"Be able to turn invisible"},
+  {a:"Always be 10 minutes late", b:"Always be 20 minutes early"},
+  {a:"Have unlimited pizza for life", b:"Have unlimited tacos for life"},
+  {a:"Live without music", b:"Live without movies"},
+  {a:"Be the funniest person in the room", b:"Be the smartest person in the room"},
+  {a:"Never eat sweets again", b:"Never eat fried food again"},
+  {a:"Time travel to the past", b:"Time travel to the future"},
+  {a:"Always have messy hair", b:"Always have spinach in your teeth"},
+  {a:"Read minds", b:"Predict the future"},
+  {a:"Live in a treehouse", b:"Live on a houseboat"},
+  {a:"Only be able to whisper", b:"Only be able to shout"},
+  {a:"Have a pet dragon", b:"Have a pet unicorn"},
+  {a:"Never use social media again", b:"Never watch another sports game again"},
+  {a:"Be able to talk to animals", b:"Be able to speak every human language"},
+  {a:"Win the lottery but split it with your whole extended family", b:"Win half as much but keep it all to yourself"},
+  {a:"Always win at board games but never enjoy them", b:"Always lose at board games but always have fun"},
+  {a:"Have snow every Christmas", b:"Have warm sunny beach Christmases"},
+  {a:"Be famous for something embarrassing", b:"Never be famous at all"}
+];
+
+/* ============ GLOBAL CLIENT STATE ============ */
+let CODE = null, ME = null, IS_HOST = false, POLL = null, LOCAL_TICK = null;
+let localSubmitted = false; // guards double submit per round phase
+let lastSeenRoundNum = 0;
+let selectedVoteChoice = null;
+let clueDraft = "";
+let guessDraft = "";
+
+const root = document.getElementById('app');
+
+/* ============ STORAGE HELPERS ============ */
+function withTimeout(promise, ms, label){
+  return Promise.race([
+    promise,
+    new Promise((_,reject)=>setTimeout(()=>reject(new Error(label+' timed out after '+(ms/1000)+'s — check your Realtime Database rules allow access.')), ms))
+  ]);
+}
+async function sGet(key){
+  try{
+    const snap = await withTimeout(get(ref(db,key)), 8000, 'Read');
+    return snap.exists() ? snap.val() : null;
+  } catch(e){ console.error('rtdb get failed', e); showDebug('Read failed: '+e.message); return null; }
+}
+async function sSet(key, val){
+  try{
+    await withTimeout(set(ref(db,key), val), 8000, 'Write');
+    return true;
+  } catch(e){ console.error('rtdb set failed', e); showDebug('Write failed: '+e.message); return false; }
+}
+async function sDelete(key){
+  try{
+    await withTimeout(set(ref(db,key), null), 8000, 'Delete');
+    return true;
+  } catch(e){ console.error('rtdb delete failed', e); showDebug('Delete failed: '+e.message); return false; }
+}
+async function sList(prefix){
+  try{
+    const q = query(ref(db), orderByKey(), startAt(prefix), endAt(prefix+'\uf8ff'));
+    const snap = await withTimeout(get(q), 8000, 'List');
+    if(!snap.exists()) return [];
+    const keys=[];
+    snap.forEach(child=>{ keys.push(child.key); });
+    return keys;
+  } catch(e){ console.error('rtdb list failed', e); showDebug('List failed: '+e.message); return []; }
+}
+
+function stateKey(code){ return `vault:${code}:state`; }
+function joinKey(code,name){ return `vault:${code}:join:${name}`; }
+function submitKey(code,round,name){ return `vault:${code}:submit:${round}:${name}`; }
+function voteKey(code,round,name){ return `vault:${code}:vote:${round}:${name}`; }
+function clueKey(code,round){ return `vault:${code}:clues:${round}`; }
+function guessKey(code,round,name){ return `vault:${code}:guess:${round}:${name}`; }
+
+function randCode(){
+  const letters="ABCDEFGHJKLMNPQRSTUVWXYZ";
+  let c='';
+  for(let i=0;i<4;i++) c+=letters[Math.floor(Math.random()*letters.length)];
+  return c;
+}
+function norm(s){ return (s||'').toString().trim().toLowerCase().replace(/[^a-z0-9]/g,''); }
+function stemWord(raw){
+  let w = norm(raw);
+  if(w.length<=3) return w;
+  const dedupeTail = (s)=> (s.length>=2 && s[s.length-1]===s[s.length-2]) ? s.slice(0,-1) : s;
+  if(w.endsWith('ies') && w.length>4) return w.slice(0,-3)+'y';
+  if(w.endsWith('ing') && w.length>5) return dedupeTail(w.slice(0,-3));
+  if(w.endsWith('ed') && w.length>4) return dedupeTail(w.slice(0,-2));
+  if(w.endsWith('es') && w.length>4) return w.slice(0,-2);
+  if(w.endsWith('est') && w.length>5) return w.slice(0,-3);
+  if(w.endsWith('ly') && w.length>4) return w.slice(0,-2);
+  if(w.endsWith('er') && w.length>4) return w.slice(0,-2);
+  if(w.endsWith('s') && !w.endsWith('ss') && w.length>3) return w.slice(0,-1);
+  return w;
+}
+function levDist(a,b){
+  const m=a.length,n=b.length;
+  const dp=Array.from({length:m+1},()=>new Array(n+1).fill(0));
+  for(let i=0;i<=m;i++)dp[i][0]=i;
+  for(let j=0;j<=n;j++)dp[0][j]=j;
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++){
+    dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  }
+  return dp[m][n];
+}
+function matchesAnswer(guess, answers){
+  const g=norm(guess);
+  if(!g) return false;
+  for(const a of answers){
+    const na=norm(a);
+    if(g===na) return true;
+    if(na.length>4 && levDist(g,na)<=1) return true;
+  }
+  return false;
+}
+
+/* ============ BOGGLE GRID ============ */
+function makeBoggleGrid(){
+  const letters=[];
+  for(let i=0;i<16;i++) letters.push(LETTER_POOL[Math.floor(Math.random()*LETTER_POOL.length)]);
+  return letters; // 16-length array, row-major 4x4
+}
+function boggleNeighbors(idx){
+  const r=Math.floor(idx/4), c=idx%4, out=[];
+  for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+    if(dr===0&&dc===0)continue;
+    const nr=r+dr,nc=c+dc;
+    if(nr>=0&&nr<4&&nc>=0&&nc<4) out.push(nr*4+nc);
+  }
+  return out;
+}
+function boggleWordValid(word, grid){
+  word=word.toUpperCase().replace(/[^A-Z]/g,'');
+  if(word.length<3) return false;
+  function dfs(pos, used, wi){
+    if(wi===word.length) return true;
+    for(const n of boggleNeighbors(pos)){
+      if(used.has(n)) continue;
+      if(grid[n]===word[wi]){
+        used.add(n);
+        if(dfs(n,used,wi+1)) return true;
+        used.delete(n);
+      }
+    }
+    return false;
+  }
+  for(let i=0;i<16;i++){
+    if(grid[i]===word[0]){
+      const used=new Set([i]);
+      if(word.length===1) return true;
+      if(dfs(i,used,1)) return true;
+    }
+  }
+  return false;
+}
+function boggleScore(len){
+  if(len<3) return 0;
+  if(len<=4) return 1;
+  if(len===5) return 2;
+  if(len===6) return 3;
+  return 5;
+}
+function wordbankScore(len){
+  if(len<3) return 0;
+  if(len===3) return 1;
+  if(len===4) return 2;
+  if(len===5) return 3;
+  return 5;
+}
+function wordUsesLetters(word, baseCounts){
+  const counts={};
+  for(const ch of word) counts[ch]=(counts[ch]||0)+1;
+  for(const ch in counts){
+    if(!baseCounts[ch] || counts[ch]>baseCounts[ch]) return false;
+  }
+  return true;
+}
+
+/* ============ SPELLING / DICTIONARY CHECK ============ */
+const DICT_CACHE = new Map();
+async function isRealWord(word){
+  word = word.toLowerCase();
+  if(DICT_CACHE.has(word)) return DICT_CACHE.get(word);
+  try{
+    const res = await withTimeout(
+      fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`),
+      5000, 'Dictionary check'
+    );
+    const ok = res.ok;
+    DICT_CACHE.set(word, ok);
+    return ok;
+  }catch(e){
+    // dictionary unreachable — don't unfairly zero the player out, accept the word
+    return true;
+  }
+}
+async function filterRealWords(words){
+  const results = await Promise.all(words.map(async w => [w, await isRealWord(w)]));
+  return new Set(results.filter(([,ok])=>ok).map(([w])=>w));
+}
+
+/* ============ STATE CREATION ============ */
+function freshState(code, hostName){
+  return {
+    code, hostName,
+    phase:'lobby', // lobby | round | scoreboard
+    players:[hostName],
+    totalScores:{[hostName]:0},
+    round:null,
+    roundNum:0,
+    usedTrivia:[], usedBluff:[], usedPrefix:[], usedWordbank:[], usedClue:[], usedEmoji:[], usedWYR:[],
+    history:[],
+    updatedAt:Date.now()
+  };
+}
+
+/* ============ MAIN RENDER LOOP ============ */
+let lastStateSnapshot = null;
+async function refreshAndRender(){
+  if(!CODE) return;
+  const st = await sGet(stateKey(CODE));
+  if(!st){ showDebug('Could not load game state (connection or rules issue) — try again.'); return; }
+  ensureArrays(st);
+  IS_HOST = (st.hostName === ME);
+  if(IS_HOST){
+    await hostMaintain(st);
+  }
+  if(ME && !st.players.includes(ME)){
+    // we've been removed from the game (or the game reset without us) — boot back to join screen
+    if(POLL) clearInterval(POLL);
+    const wasCode = CODE;
+    CODE=null; ME=null; IS_HOST=false; lastState=null; lastStateSnapshot=null;
+    localSubmitted=false; selectedVoteChoice=null; clueDraft=""; guessDraft="";
+    const b = document.getElementById('leaveGameBtn');
+    if(b) b.remove();
+    renderJoinScreen();
+    showErr("You've been removed from this game by the host.");
+    return;
+  }
+  const snapshot = JSON.stringify(st);
+  if(snapshot === lastStateSnapshot){
+    return; // nothing actually changed — don't touch the DOM or steal input focus
+  }
+  lastStateSnapshot = snapshot;
+  render(st);
+}
+
+function ensureArrays(st){
+  st.usedTrivia = st.usedTrivia || [];
+  st.usedBluff = st.usedBluff || [];
+  st.usedPrefix = st.usedPrefix || [];
+  st.usedWordbank = st.usedWordbank || [];
+  st.usedClue = st.usedClue || [];
+  st.usedEmoji = st.usedEmoji || [];
+  st.usedWYR = st.usedWYR || [];
+  st.history = st.history || [];
+  st.players = st.players || [];
+  st.totalScores = st.totalScores || {};
+  return st;
+}
+
+async function hostMaintain(st){
+  ensureArrays(st);
+  // merge new joiners
+  const joinKeys = await sList(`vault:${st.code}:join:`);
+  let changed=false;
+  for(const k of joinKeys){
+    const name = k.split(':').slice(3).join(':');
+    if(name && !st.players.includes(name)){
+      st.players.push(name);
+      st.totalScores[name]=0;
+      changed=true;
+    }
+  }
+  // if clue round in guessing phase, check for a correct guess
+  if(st.round && st.round.type==='clue' && st.round.phase==='guessing'){
+    const gKeys = await sList(`vault:${st.code}:guess:${st.roundNum}:`);
+    let best=null;
+    for(const k of gKeys){
+      const name = k.split(':').slice(4).join(':');
+      if(name===st.round.clueGiver) continue;
+      const g = await sGet(k);
+      if(g && matchesAnswer(g.text, [st.round.secretWord])){
+        if(!best || g.ts<best.ts) best={name,ts:g.ts};
+      }
+    }
+    if(best){
+      const clueCount = (st.round.clues||[]).length;
+      const pts = Math.max(1, 6-clueCount);
+      st.totalScores[best.name]=(st.totalScores[best.name]||0)+pts;
+      st.totalScores[st.round.clueGiver]=(st.totalScores[st.round.clueGiver]||0)+pts;
+      st.round.phase='reveal';
+      st.round.winner=best.name;
+      st.round.pointsAwarded=pts;
+      changed=true;
+    }
+  }
+  // if a war round is mid-play, check whether the current flip is ready to resolve
+  if(st.round && st.round.type==='war' && st.round.phase==='submit'){
+    const resolved = await warResolveFlipIfReady(st, false);
+    if(resolved) changed = true;
+  }
+  if(changed){ st.updatedAt=Date.now(); await sSet(stateKey(st.code), st); }
+}
+
+function startPolling(){
+  if(POLL) clearInterval(POLL);
+  refreshAndRender();
+  POLL = setInterval(refreshAndRender, 2200);
+}
+
+/* ============ ROUND SETUP GENERATORS (host only) ============ */
+function pickUnused(bank, usedArr){
+  const avail = bank.map((_,i)=>i).filter(i=>!usedArr.includes(i));
+  const pool = avail.length? avail : bank.map((_,i)=>i);
+  if(!avail.length) usedArr.length=0;
+  const idx = pool[Math.floor(Math.random()*pool.length)];
+  usedArr.push(idx);
+  return idx;
+}
+
+async function hostStartRound(type){
+ try{
+  const st = await sGet(stateKey(CODE));
+  if(!st){ showDebug('Could not load game state (connection or rules issue) — try again.'); return; }
+  ensureArrays(st);
+  st.roundNum = (st.roundNum||0)+1;
+  const rn = st.roundNum;
+  let round = {type, phase:'submit', startedAt:Date.now(), durationMs:60000};
+  if(type==='trivia'){
+    const idx=pickUnused(TRIVIA, st.usedTrivia);
+    round.question=TRIVIA[idx].q; round.answers=TRIVIA[idx].a;
+    round.durationMs=25000;
+  } else if(type==='bluff'){
+    const idx=pickUnused(BLUFF, st.usedBluff);
+    round.fact=BLUFF[idx].fact; round.answer=BLUFF[idx].answer;
+    round.phase='submit'; round.durationMs=40000;
+  } else if(type==='prefix'){
+    const idx=pickUnused(PREFIXES, st.usedPrefix);
+    round.prefix=PREFIXES[idx];
+    round.durationMs=50000;
+  } else if(type==='boggle'){
+    round.grid = makeBoggleGrid();
+    round.durationMs=75000;
+  } else if(type==='wordbank'){
+    const idx=pickUnused(WORDBANK_WORDS, st.usedWordbank);
+    round.baseWord=WORDBANK_WORDS[idx];
+    round.durationMs=60000;
+  } else if(type==='clue'){
+    if(!st.players || st.players.length===0){
+      showDebug('No players found in the game — cannot start Clue Chain.');
+      return;
+    }
+    const idx=pickUnused(CLUE_WORDS, st.usedClue);
+    const giver = st.players[(st.roundNum-1)%st.players.length];
+    round.secretWord = CLUE_WORDS[idx];
+    round.clueGiver = giver;
+    round.clues=[];
+    round.phase='clueing';
+  } else if(type==='blackjack'){
+    const dealerDeck = makeShuffledDeck();
+    round.dealerHand = [dealerDeck.pop(), dealerDeck.pop()];
+    round.dealerDeck = dealerDeck;
+    round.durationMs = 90000;
+  } else if(type==='war'){
+    round.flip = 1;
+    round.totalFlips = WAR_FLIPS_PER_GAME;
+    round.flipWins = {};
+    (st.players||[]).forEach(p=> round.flipWins[p]=0);
+    round.durationMs = 90000;
+  } else if(type==='emoji'){
+    const idx=pickUnused(EMOJI, st.usedEmoji);
+    round.question=EMOJI[idx].q; round.answers=EMOJI[idx].a;
+    round.durationMs=25000;
+  } else if(type==='hilo'){
+    round.durationMs = 60000;
+  } else if(type==='wyr'){
+    const idx=pickUnused(WOULD_YOU_RATHER, st.usedWYR);
+    round.optionA = WOULD_YOU_RATHER[idx].a;
+    round.optionB = WOULD_YOU_RATHER[idx].b;
+    round.phase = 'vote';
+    round.durationMs = 30000;
+  }
+  st.phase='round';
+  st.round=round;
+  st.updatedAt=Date.now();
+  const ok = await sSet(stateKey(CODE), st);
+  if(!ok){ showDebug('Could not save the new round — check Realtime Database write permissions.'); return; }
+  localSubmitted=false; selectedVoteChoice=null; clueDraft=""; guessDraft="";
+  render(st);
+ } catch(e){
+   showDebug('hostStartRound error ('+type+'): '+(e && e.message ? e.message : e));
+ }
+}
+
+async function hostAdvancePhase(nextPhase){
+  const st = await sGet(stateKey(CODE));
+  if(!st){ showDebug('Could not load game state (connection or rules issue) — try again.'); return; }
+  ensureArrays(st);
+  st.round.phase = nextPhase;
+  if(nextPhase==='vote') st.round.voteStartedAt=Date.now();
+  st.updatedAt=Date.now();
+  await sSet(stateKey(CODE), st);
+  render(st);
+}
+
+async function hostTallyAndReveal(){
+  const st = await sGet(stateKey(CODE));
+  if(!st){ showDebug('Could not load game state (connection or rules issue) — try again.'); return; }
+  ensureArrays(st);
+  const rn = st.roundNum, round = st.round;
+  if(round.type==='trivia' || round.type==='emoji'){
+    const subKeys = await sList(`vault:${CODE}:submit:${rn}:`);
+    let results=[];
+    for(const k of subKeys){
+      const name=k.split(':').slice(4).join(':');
+      const s=await sGet(k);
+      if(s) results.push({name, text:s.text, ts:s.ts, correct: matchesAnswer(s.text, round.answers)});
+    }
+    results.sort((a,b)=>a.ts-b.ts);
+    let rank=0;
+    for(const r of results){
+      if(r.correct){
+        rank++;
+        const pts = rank===1?3:(rank===2?2:1);
+        st.totalScores[r.name]=(st.totalScores[r.name]||0)+pts;
+        r.points=pts;
+      } else r.points=0;
+    }
+    round.results=results;
+  } else if(round.type==='bluff'){
+    const subKeys = await sList(`vault:${CODE}:submit:${rn}:`);
+    const voteKeys = await sList(`vault:${CODE}:vote:${rn}:`);
+    let subs={};
+    for(const k of subKeys){
+      const name=k.split(':').slice(4).join(':');
+      const s=await sGet(k);
+      if(s) subs[name]=s.text;
+    }
+    let votes={};
+    for(const k of voteKeys){
+      const name=k.split(':').slice(4).join(':');
+      const v=await sGet(k);
+      if(v) votes[name]=v.choice;
+    }
+    for(const voter in votes){
+      const choice = votes[voter];
+      if(choice==='REAL'){
+        st.totalScores[voter]=(st.totalScores[voter]||0)+2;
+      } else if(subs[choice]!==undefined){
+        st.totalScores[choice]=(st.totalScores[choice]||0)+1;
+      }
+    }
+    round.subs=subs; round.votes=votes;
+  } else if(round.type==='prefix'){
+    const subKeys = await sList(`vault:${CODE}:submit:${rn}:`);
+    let perPlayer={};
+    for(const k of subKeys){
+      const name=k.split(':').slice(4).join(':');
+      const s=await sGet(k);
+      if(!s) continue;
+      const words = (s.text||'').split(/[\n,]+/).map(norm).filter(w=>w && w.startsWith(norm(round.prefix)) && w.length>norm(round.prefix).length);
+      const uniq=[...new Set(words)];
+      perPlayer[name]=uniq;
+    }
+    const allCandidates = [...new Set(Object.values(perPlayer).flat())];
+    const realWords = await filterRealWords(allCandidates);
+    for(const name in perPlayer){
+      perPlayer[name] = perPlayer[name].filter(w=>realWords.has(w));
+    }
+    // collapse word variants (play/plays/playing) to the same stem, per player first
+    for(const name in perPlayer){
+      const seenStems = new Set();
+      perPlayer[name] = perPlayer[name].filter(w=>{
+        const stem = stemWord(w);
+        if(seenStems.has(stem)) return false;
+        seenStems.add(stem);
+        return true;
+      });
+    }
+    const stemFreq = {};
+    Object.values(perPlayer).flat().forEach(w=>{ const st2=stemWord(w); stemFreq[st2]=(stemFreq[st2]||0)+1; });
+    const freq = {};
+    Object.values(perPlayer).flat().forEach(w=> freq[w]=stemFreq[stemWord(w)]);
+    for(const name in perPlayer){
+      let pts=0;
+      perPlayer[name].forEach(w=> pts += freq[w]===1?2:0);
+      st.totalScores[name]=(st.totalScores[name]||0)+pts;
+    }
+    round.perPlayer=perPlayer;
+    round.wordFreq=freq;
+  } else if(round.type==='boggle'){
+    const subKeys = await sList(`vault:${CODE}:submit:${rn}:`);
+    let perPlayer={};
+    for(const k of subKeys){
+      const name=k.split(':').slice(4).join(':');
+      const s=await sGet(k);
+      if(!s) continue;
+      const words=(s.text||'').split(/[\n,]+/).map(w=>norm(w)).filter(w=>w.length>=3);
+      const uniq=[...new Set(words)];
+      const valid = uniq.filter(w=>boggleWordValid(w, round.grid));
+      perPlayer[name]=valid;
+    }
+    const allCandidates = [...new Set(Object.values(perPlayer).flat())];
+    const realWords = await filterRealWords(allCandidates);
+    for(const name in perPlayer){
+      perPlayer[name] = perPlayer[name].filter(w=>realWords.has(w));
+    }
+    for(const name in perPlayer){
+      const seenStems = new Set();
+      perPlayer[name] = perPlayer[name].filter(w=>{
+        const stem = stemWord(w);
+        if(seenStems.has(stem)) return false;
+        seenStems.add(stem);
+        return true;
+      });
+    }
+    const stemFreq = {};
+    Object.values(perPlayer).flat().forEach(w=>{ const st2=stemWord(w); stemFreq[st2]=(stemFreq[st2]||0)+1; });
+    const validByWord = {};
+    Object.values(perPlayer).flat().forEach(w=> validByWord[w]=stemFreq[stemWord(w)]);
+    for(const name in perPlayer){
+      let pts=0;
+      perPlayer[name].forEach(w=>{
+        if(validByWord[w]===1) pts+=boggleScore(w.length);
+      });
+      st.totalScores[name]=(st.totalScores[name]||0)+pts;
+    }
+    round.perPlayer=perPlayer;
+    round.wordFreq=validByWord;
+  } else if(round.type==='wordbank'){
+    const base = round.baseWord.toLowerCase();
+    const baseCounts={};
+    for(const ch of base) baseCounts[ch]=(baseCounts[ch]||0)+1;
+    const subKeys = await sList(`vault:${CODE}:submit:${rn}:`);
+    let perPlayer={};
+    for(const k of subKeys){
+      const name=k.split(':').slice(4).join(':');
+      const s=await sGet(k);
+      if(!s) continue;
+      const words=(s.text||'').split(/[\n,]+/).map(w=>norm(w)).filter(w=>w.length>=3 && wordUsesLetters(w, baseCounts));
+      const uniq=[...new Set(words)];
+      perPlayer[name]=uniq;
+    }
+    const allCandidates = [...new Set(Object.values(perPlayer).flat())];
+    const realWords = await filterRealWords(allCandidates);
+    for(const name in perPlayer){
+      perPlayer[name] = perPlayer[name].filter(w=>realWords.has(w));
+    }
+    for(const name in perPlayer){
+      const seenStems = new Set();
+      perPlayer[name] = perPlayer[name].filter(w=>{
+        const stem = stemWord(w);
+        if(seenStems.has(stem)) return false;
+        seenStems.add(stem);
+        return true;
+      });
+    }
+    const stemFreq = {};
+    Object.values(perPlayer).flat().forEach(w=>{ const st2=stemWord(w); stemFreq[st2]=(stemFreq[st2]||0)+1; });
+    const freq = {};
+    Object.values(perPlayer).flat().forEach(w=> freq[w]=stemFreq[stemWord(w)]);
+    for(const name in perPlayer){
+      let pts=0;
+      perPlayer[name].forEach(w=>{
+        if(freq[w]===1) pts+=wordbankScore(w.length);
+      });
+      st.totalScores[name]=(st.totalScores[name]||0)+pts;
+    }
+    round.perPlayer=perPlayer;
+    round.wordFreq=freq;
+  } else if(round.type==='blackjack'){
+    let dealerHand = [...round.dealerHand];
+    let dealerDeck = [...round.dealerDeck];
+    while(blackjackHandValue(dealerHand)<17){
+      if(dealerDeck.length===0) break;
+      dealerHand.push(dealerDeck.pop());
+    }
+    const dealerVal = blackjackHandValue(dealerHand);
+    const dealerBJ = dealerHand.length===2 && dealerVal===21;
+    const dealerBust = dealerVal>21;
+    const subKeys = await sList(`vault:${CODE}:submit:${rn}:`);
+    let results = {};
+    for(const k of subKeys){
+      const name=k.split(':').slice(4).join(':');
+      const s=await sGet(k);
+      if(!s || !s.hand) continue;
+      const val = blackjackHandValue(s.hand);
+      const bust = val>21;
+      const naturalBJ = s.hand.length===2 && val===21;
+      let outcome, pts;
+      if(bust){ outcome='bust'; pts=0; }
+      else if(naturalBJ && !dealerBJ){ outcome='blackjack'; pts=3; }
+      else if(dealerBust){ outcome='win'; pts=2; }
+      else if(val>dealerVal){ outcome='win'; pts=2; }
+      else if(val===dealerVal){ outcome='push'; pts=1; }
+      else { outcome='lose'; pts=0; }
+      results[name] = {hand:s.hand, value:val, outcome, points:pts};
+      st.totalScores[name] = (st.totalScores[name]||0)+pts;
+    }
+    round.dealerFinalHand = dealerHand;
+    round.dealerFinalValue = dealerVal;
+    round.results = results;
+  } else if(round.type==='hilo'){
+    const subKeys = await sList(`vault:${CODE}:submit:${rn}:`);
+    let results = {};
+    for(const k of subKeys){
+      const name=k.split(':').slice(4).join(':');
+      const s=await sGet(k);
+      if(!s) continue;
+      const outcome = s.outcome==='busted' ? 'busted' : 'cashedOut';
+      const pts = outcome==='busted' ? 0 : s.streak;
+      results[name] = {streak: s.streak, outcome, points: pts};
+      st.totalScores[name] = (st.totalScores[name]||0)+pts;
+    }
+    round.results = results;
+  } else if(round.type==='wyr'){
+    const voteKeys = await sList(`vault:${CODE}:vote:${rn}:`);
+    let votes = {};
+    for(const k of voteKeys){
+      const name=k.split(':').slice(4).join(':');
+      const v=await sGet(k);
+      if(v) votes[name]=v.choice;
+    }
+    const countA = Object.values(votes).filter(c=>c==='A').length;
+    const countB = Object.values(votes).filter(c=>c==='B').length;
+    const majority = countA>countB ? 'A' : (countB>countA ? 'B' : null);
+    let results = {};
+    for(const name in votes){
+      const choice = votes[name];
+      const minorityCount = choice==='A' ? countA : countB;
+      const isBlackSheep = majority && choice!==majority && minorityCount===1;
+      let pts;
+      if(!majority) pts = 1; // tie, everyone gets a consolation point
+      else if(choice===majority) pts = 2;
+      else if(isBlackSheep) pts = 2;
+      else pts = 0;
+      results[name] = {choice, points: pts, blackSheep: !!isBlackSheep};
+      st.totalScores[name] = (st.totalScores[name]||0)+pts;
+    }
+    round.voteBreakdown = {A:countA, B:countB};
+    round.results = results;
+  }
+  round.phase='reveal';
+  st.round=round;
+  st.updatedAt=Date.now();
+  await sSet(stateKey(CODE), st);
+  render(st);
+}
+
+async function hostBackToLobby(){
+  const st = await sGet(stateKey(CODE));
+  if(!st){ showDebug('Could not load game state (connection or rules issue) — try again.'); return; }
+  ensureArrays(st);
+  st.history.push({roundNum:st.roundNum, type:st.round.type});
+  st.phase='lobby';
+  st.round=null;
+  st.updatedAt=Date.now();
+  await sSet(stateKey(CODE), st);
+  render(st);
+}
+
+async function hostEndGame(){
+  const st = await sGet(stateKey(CODE));
+  if(!st){ showDebug('Could not load game state (connection or rules issue) — try again.'); return; }
+  ensureArrays(st);
+  st.phase='scoreboard';
+  st.updatedAt=Date.now();
+  await sSet(stateKey(CODE), st);
+  render(st);
+}
+
+/* ============ PLAYER ACTIONS ============ */
+async function playerSubmitText(){
+  const el = document.getElementById('submitInput');
+  if(!el) return;
+  const val = el.value;
+  if(!val.trim()) return;
+  await sSet(submitKey(CODE, currentRoundNum, ME), {text:val, ts:Date.now()});
+  localSubmitted=true;
+  render(lastState);
+}
+function wordBoxesHtml(startCount){
+  let boxes = '';
+  for(let i=0;i<startCount;i++){
+    boxes += `<input type="text" class="word-box-input" placeholder="word ${i+1}" autocomplete="off" autocapitalize="off">`;
+  }
+  return `<div id="wordBoxesContainer">${boxes}</div>
+    <button type="button" class="btn-secondary" id="addWordBtn" style="margin-bottom:14px;">+ Add Another Word</button>`;
+}
+function wireWordBoxes(){
+  const container = document.getElementById('wordBoxesContainer');
+  const addBtn = document.getElementById('addWordBtn');
+  if(addBtn && container){
+    addBtn.onclick = ()=>{
+      const inp = document.createElement('input');
+      inp.type='text';
+      inp.className='word-box-input';
+      inp.placeholder = `word ${container.children.length+1}`;
+      inp.autocomplete='off';
+      inp.autocapitalize='off';
+      container.appendChild(inp);
+      inp.focus();
+    };
+  }
+}
+function gatherWordBoxValues(){
+  return Array.from(document.querySelectorAll('.word-box-input'))
+    .map(i=>i.value.trim())
+    .filter(v=>v.length>0);
+}
+async function playerSubmitList(){
+  const savedEl = document.getElementById('savedIndicator');
+  const words = gatherWordBoxValues();
+  const ok = await sSet(submitKey(CODE, currentRoundNum, ME), {text: words.join(','), ts: Date.now()});
+  if(savedEl){
+    savedEl.textContent = ok
+      ? `Saved ✓ (${words.length} word${words.length===1?'':'s'}) — keep adding more, or wait for time to run out.`
+      : 'Save failed — check your connection and try again.';
+    savedEl.style.color = ok ? 'var(--good)' : 'var(--coral)';
+  }
+}
+let currentRoundNum=0, lastState=null;
+
+async function playerVote(choice){
+  await sSet(voteKey(CODE, currentRoundNum, ME), {choice, ts:Date.now()});
+  selectedVoteChoice=choice;
+  render(lastState);
+}
+
+async function clueGiverAddClue(){
+  const el = document.getElementById('clueInput');
+  if(!el || !el.value.trim()) return;
+  const st = await sGet(stateKey(CODE));
+  if(!st){ showDebug('Could not load game state (connection or rules issue) — try again.'); return; }
+  ensureArrays(st);
+  st.round.clues = st.round.clues || [];
+  st.round.clues.push(el.value.trim());
+  st.updatedAt=Date.now();
+  await sSet(stateKey(CODE), st);
+  render(st);
+  clueDraft="";
+}
+
+async function guesserSubmitGuess(){
+  const el = document.getElementById('guessInput');
+  if(!el || !el.value.trim()) return;
+  await sSet(guessKey(CODE, currentRoundNum, ME), {text:el.value.trim(), ts:Date.now()});
+  el.value='';
+}
+
+/* ============ JOIN / CREATE ============ */
+async function storageWorks(){
+  const testKey = 'vault:_diag:'+Math.random().toString(36).slice(2);
+  const ok = await sSet(testKey, {t:Date.now()});
+  if(!ok) return false;
+  const back = await sGet(testKey);
+  return !!back;
+}
+
+async function createGame(name){
+  const btn = document.getElementById('createBtn');
+  if(btn){ btn.textContent='Starting…'; btn.disabled=true; }
+  try{
+    const works = await storageWorks();
+    if(!works){
+      showErr("Couldn't connect to the game database. Check your internet connection and your Realtime Database rules.");
+      return;
+    }
+    ME = name.trim();
+    let code = randCode(), tries=0;
+    while(tries<8){
+      const exists = await sGet(stateKey(code));
+      if(!exists) break;
+      code = randCode(); tries++;
+    }
+    CODE = code;
+    const st = freshState(CODE, ME);
+    const ok1 = await sSet(stateKey(CODE), st);
+    const ok2 = await sSet(joinKey(CODE, ME), {name:ME, joinedAt:Date.now()});
+    if(!ok1 || !ok2){
+      showErr("Created the game but couldn't save it — check your Realtime Database rules allow write access.");
+      return;
+    }
+    IS_HOST = true;
+    render(st); // paint immediately using local data, don't wait on a re-fetch
+    startPolling();
+  } catch(e){
+    showDebug('createGame error: '+(e && e.message ? e.message : e));
+    showErr("Something went wrong starting the game. See the debug note below.");
+  } finally {
+    if(btn){ btn.textContent='Start a New Game'; btn.disabled=false; }
+  }
+}
+
+async function joinGame(name, code){
+  const btn = document.getElementById('joinBtn');
+  if(btn){ btn.textContent='Joining…'; btn.disabled=true; }
+  try{
+    const works = await storageWorks();
+    if(!works){
+      showErr("Couldn't connect to the game database. Check your internet connection and try again.");
+      return;
+    }
+    ME = name.trim();
+    CODE = code.trim().toUpperCase();
+    const st = await sGet(stateKey(CODE));
+    if(!st){
+      showErr("Couldn't find that game code. Double check it with your host.");
+      ME=null; CODE=null;
+      return;
+    }
+    ensureArrays(st);
+    if(st.players.some(p=>p.toLowerCase()===ME.toLowerCase())){
+      const reconnecting = confirm(`"${ME}" is already in this game. Is this you reconnecting? Your existing score will carry over.\n\nTap OK if this is you, or Cancel to pick a different name.`);
+      if(!reconnecting){
+        showErr(`Pick a different name, or ask your host to Remove the old "${ME}" first.`);
+        ME=null; CODE=null;
+        return;
+      }
+      // match the exact existing casing so we don't create a duplicate entry
+      ME = st.players.find(p=>p.toLowerCase()===ME.toLowerCase());
+    }
+    const ok = await sSet(joinKey(CODE, ME), {name:ME, joinedAt:Date.now()});
+    if(!ok){
+      showErr("Found the game but couldn't join it — check your Realtime Database write permissions.");
+      return;
+    }
+    IS_HOST = (st.hostName === ME);
+    render(st);
+    startPolling();
+  } catch(e){
+    showDebug('joinGame error: '+(e && e.message ? e.message : e));
+    showErr("Something went wrong joining the game. See the debug note below.");
+  } finally {
+    if(btn){ btn.textContent='Join Game'; btn.disabled=false; }
+  }
+}
+
+/* ============ RENDER: JOIN SCREEN ============ */
+function renderJoinScreen(){
+  root.innerHTML = `
+    <div class="brand">
+      <div class="mark">SYNCED · NO CALLING NEEDED</div>
+      <h1>The Family Vault</h1>
+      <div class="muted">A game night that lives on everyone's phone</div>
+    </div>
+    <div class="card">
+      <label>Your name</label>
+      <input type="text" id="nameInput" placeholder="e.g. Tee" maxlength="16">
+      <button class="btn-primary" id="createBtn">Start a New Game</button>
+      <div class="divider"></div>
+      <label>Have a code already?</label>
+      <input type="text" id="codeInput" placeholder="4-letter code" maxlength="4" style="text-transform:uppercase;">
+      <button class="btn-secondary" id="joinBtn">Join Game</button>
+      <div class="error-text" id="errText" style="display:none;"></div>
+    </div>
+    <div class="footer-note">Works best with 3–5 players, each on their own phone. Everyone needs an internet connection.</div>
+  `;
+  document.getElementById('createBtn').onclick = ()=>{
+    const n = document.getElementById('nameInput').value;
+    if(!n.trim()){ showErr('Enter your name first.'); return; }
+    createGame(n);
+  };
+  document.getElementById('joinBtn').onclick = ()=>{
+    const n = document.getElementById('nameInput').value;
+    const c = document.getElementById('codeInput').value;
+    if(!n.trim() || !c.trim()){ showErr('Enter your name and the code.'); return; }
+    joinGame(n,c);
+  };
+}
+function showErr(msg){
+  const e=document.getElementById('errText');
+  if(e){ e.style.display='block'; e.textContent=msg; }
+  else { showDebug(msg); }
+}
+function showDebug(msg){
+  let d = document.getElementById('debugBanner');
+  if(!d){
+    d = document.createElement('div');
+    d.id='debugBanner';
+    d.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#3a1414;color:#ffb4a3;font-family:monospace;font-size:12px;padding:10px 14px;z-index:9999;max-height:35vh;overflow:auto;border-top:2px solid #E1654B;';
+    document.body.appendChild(d);
+  }
+  const line = document.createElement('div');
+  line.style.marginBottom='4px';
+  line.textContent = '⚠ '+msg;
+  d.appendChild(line);
+}
+window.addEventListener('error', e=>{ showDebug('JS error: '+e.message); });
+window.addEventListener('unhandledrejection', e=>{
+  const m = e.reason && e.reason.message ? e.reason.message : String(e.reason);
+  showDebug('Unhandled error: '+m);
+});
+
+/* ============ RENDER: MAIN DISPATCH ============ */
+function render(st){
+  lastState = st;
+  lastStateSnapshot = JSON.stringify(st);
+  currentRoundNum = st.roundNum;
+  if(st.roundNum !== lastSeenRoundNum){
+    lastSeenRoundNum = st.roundNum;
+    localSubmitted = false;
+    selectedVoteChoice = null;
+    clueDraft = "";
+    guessDraft = "";
+  }
+  if(st.phase==='lobby') renderLobby(st);
+  else if(st.phase==='round') renderRound(st);
+  else if(st.phase==='scoreboard') renderScoreboard(st);
+  ensureLeaveButton();
+}
+
+function ensureLeaveButton(){
+  let b = document.getElementById('leaveGameBtn');
+  if(!b){
+    b = document.createElement('button');
+    b.id='leaveGameBtn';
+    b.textContent='Leave Game';
+    b.style.cssText='position:fixed;top:14px;right:14px;width:auto;padding:8px 14px;font-size:12px;margin:0;background:rgba(0,0,0,0.35);color:var(--muted);border:1px solid rgba(255,255,255,0.15);border-radius:8px;z-index:500;';
+    b.onclick = leaveGame;
+    document.body.appendChild(b);
+  }
+}
+async function leaveGame(){
+  try{
+    if(IS_HOST && CODE && lastState){
+      const st = await sGet(stateKey(CODE));
+      if(st){
+        ensureArrays(st);
+        const remaining = st.players.filter(p=>p!==ME);
+        if(remaining.length>0){
+          st.hostName = remaining[0];
+          await sSet(stateKey(CODE), st);
+        }
+      }
+    }
+    if(CODE && ME) await sDelete(joinKey(CODE, ME));
+  } catch(e){
+    console.error('leaveGame cleanup error', e);
+  }
+  if(POLL) clearInterval(POLL);
+  CODE=null; ME=null; IS_HOST=false; lastState=null;
+  localSubmitted=false; selectedVoteChoice=null; clueDraft=""; guessDraft="";
+  const b = document.getElementById('leaveGameBtn');
+  if(b) b.remove();
+  renderJoinScreen();
+}
+
+function scoreListHtml(st){
+  const sorted = [...st.players].sort((a,b)=>(st.totalScores[b]||0)-(st.totalScores[a]||0));
+  return `<ul class="players-list">${sorted.map(p=>`
+    <li><span>${p}${p===st.hostName?'<span class="host-badge">HOST</span>':''}</span>
+    <span class="score">${st.totalScores[p]||0}</span></li>`).join('')}</ul>`;
+}
+
+function currentLeader(st){
+  const scores = st.totalScores || {};
+  let leader = st.hostName;
+  let leaderScore = scores[st.hostName]||0;
+  for(const p of st.players){
+    const s = scores[p]||0;
+    if(s > leaderScore){ leader = p; leaderScore = s; }
+  }
+  return leader;
+}
+
+function renderLobby(st){
+  const isHost = IS_HOST;
+  const leader = currentLeader(st);
+  const isLeader = (ME === leader);
+  const anyScores = Object.values(st.totalScores||{}).some(v=>v>0);
+  const playerListHtml = isHost
+    ? `<ul class="players-list">${[...st.players].sort((a,b)=>(st.totalScores[b]||0)-(st.totalScores[a]||0)).map(p=>`
+        <li><span>${p}${p===st.hostName?'<span class="host-badge">HOST</span>':''}${anyScores && p===leader?' <span class="host-badge" style="background:var(--good);">PICKS NEXT</span>':''}</span>
+        <span style="display:flex;align-items:center;gap:10px;">
+          <span class="score">${st.totalScores[p]||0}</span>
+          ${p!==st.hostName ? `<button class="btn-small btn-secondary" data-makehost="${p}" style="padding:4px 10px;font-size:11px;">Make Host</button>
+          <button class="btn-small btn-coral" data-remove="${p}" style="padding:4px 10px;font-size:11px;">Remove</button>` : ''}
+        </span></li>`).join('')}</ul>`
+    : scoreListHtml(st);
+  root.innerHTML = `
+    <div class="brand">
+      <div class="mark">GAME LOBBY</div>
+      <h1>The Family Vault</h1>
+    </div>
+    <div class="card center">
+      <label>Share this code with everyone</label>
+      <div class="keytag">${st.code}</div>
+    </div>
+    <div class="card">
+      <div class="tag">Players (${st.players.length})</div>
+      ${playerListHtml}
+    </div>
+    ${isLeader ? `
+    <div class="card">
+      <div class="tag">${anyScores ? `You're in the lead — pick the next round` : `Pick the first round`}</div>
+      <div class="menu-grid">
+        <button class="btn-secondary" data-type="trivia">🧠 Trivia Sprint</button>
+        <button class="btn-secondary" data-type="bluff">🎭 Bluff Trivia</button>
+        <button class="btn-secondary" data-type="prefix">🔤 Prefix Blitz</button>
+        <button class="btn-secondary" data-type="boggle">🎲 Boggle</button>
+        <button class="btn-secondary" data-type="wordbank">🧩 Most Words</button>
+        <button class="btn-secondary" data-type="clue">🗝️ Clue Chain</button>
+        <button class="btn-secondary" data-type="blackjack">🃏 21 Blackjack</button>
+        <button class="btn-secondary" data-type="war">⚔️ I Declare War</button>
+        <button class="btn-secondary" data-type="emoji">😀 Emoji Guess</button>
+        <button class="btn-secondary" data-type="hilo">🔺 Higher or Lower</button>
+        <button class="btn-secondary" data-type="wyr">🤔 Would You Rather</button>
+      </div>
+    </div>
+    ` : `<div class="card center muted">Waiting for ${leader}${anyScores ? " (current leader)" : ""} to pick the next round…</div>`}
+    ${isHost ? `
+    <div class="card">
+      <div class="tag">Host controls</div>
+      <button class="btn-coral" id="endBtn">End Game &amp; Show Final Scores</button>
+    </div>
+    ` : ''}
+  `;
+  if(isLeader){
+    root.querySelectorAll('[data-type]').forEach(b=>{
+      b.onclick = ()=> hostStartRound(b.getAttribute('data-type')).catch(e=>showDebug('Button error: '+(e&&e.message||e)));
+    });
+  }
+  if(isHost){
+    document.getElementById('endBtn').onclick = ()=> hostEndGame();
+    root.querySelectorAll('[data-remove]').forEach(b=>{
+      b.onclick = ()=> hostRemovePlayer(b.getAttribute('data-remove')).catch(e=>showDebug('Remove failed: '+(e&&e.message||e)));
+    });
+    root.querySelectorAll('[data-makehost]').forEach(b=>{
+      b.onclick = ()=> hostTransferHost(b.getAttribute('data-makehost')).catch(e=>showDebug('Make Host failed: '+(e&&e.message||e)));
+    });
+  }
+}
+
+async function hostTransferHost(name){
+  if(!confirm(`Make ${name} the new host? You'll become a regular player.`)) return;
+  const st = await sGet(stateKey(CODE));
+  if(!st){ showDebug('Could not load game state (connection or rules issue) — try again.'); return; }
+  ensureArrays(st);
+  st.hostName = name;
+  st.updatedAt = Date.now();
+  const ok = await sSet(stateKey(CODE), st);
+  if(!ok){ showDebug('Could not change host — check Realtime Database write permissions.'); return; }
+  IS_HOST = (st.hostName === ME);
+  render(st);
+}
+
+async function hostRemovePlayer(name){
+  if(!confirm(`Remove ${name} from the game?`)) return;
+  const st = await sGet(stateKey(CODE));
+  if(!st){ showDebug('Could not load game state (connection or rules issue) — try again.'); return; }
+  ensureArrays(st);
+  st.players = st.players.filter(p=>p!==name);
+  delete st.totalScores[name];
+  st.updatedAt = Date.now();
+  const ok = await sSet(stateKey(CODE), st);
+  if(!ok){ showDebug('Could not remove player — check Realtime Database write permissions.'); return; }
+  await sDelete(joinKey(CODE, name));
+  render(st);
+}
+
+function timerHtml(round){
+  if(!round.startedAt || !round.durationMs) return '';
+  const elapsed = Date.now()-round.startedAt;
+  const remain = Math.max(0, Math.ceil((round.durationMs-elapsed)/1000));
+  const pct = Math.max(0,Math.min(1,(round.durationMs-elapsed)/round.durationMs));
+  const circ = 2*Math.PI*36;
+  return `
+    <div class="timer-ring">
+      <svg width="90" height="90">
+        <circle cx="45" cy="45" r="36" stroke="rgba(255,255,255,0.1)" stroke-width="7" fill="none"/>
+        <circle id="timerRingCircle" cx="45" cy="45" r="36" stroke="var(--gold)" stroke-width="7" fill="none"
+          stroke-dasharray="${circ}" stroke-dashoffset="${circ*(1-pct)}" stroke-linecap="round"
+          transform="rotate(-90 45 45)"/>
+      </svg>
+      <div class="timer-num" id="timerNumText">${remain}s</div>
+    </div>`;
+}
+
+function renderRound(st){
+  const round = st.round;
+  const type = round.type;
+  root.innerHTML = `<div class="brand"><div class="mark">ROUND ${st.roundNum}</div><h1>${roundTitle(type)}</h1></div><div id="roundBody"></div>`;
+  const body = document.getElementById('roundBody');
+
+  if(type==='trivia') renderTrivia(st, body);
+  else if(type==='bluff') renderBluff(st, body);
+  else if(type==='prefix') renderGenericSubmit(st, body, {
+    label:`Words starting with`, promptHtml:`<span class="blank">${round.prefix}</span>___`,
+    placeholder:"e.g. prepare, prevent, precook...", instructions:"List as many real words as you can that start with this prefix. One per line or comma-separated."
+  });
+  else if(type==='boggle') renderBoggle(st, body);
+  else if(type==='wordbank') renderGenericSubmit(st, body, {
+    label:`Make words from the letters in`, promptHtml:`${round.baseWord}`,
+    placeholder:"e.g. cat, ten, rate...", instructions:"Only use letters that appear in the word above, and no more times than they appear."
+  });
+  else if(type==='clue') renderClue(st, body);
+  else if(type==='blackjack') renderBlackjack(st, body);
+  else if(type==='war') renderWar(st, body);
+  else if(type==='emoji') renderTrivia(st, body);
+  else if(type==='hilo') renderHiLo(st, body);
+  else if(type==='wyr') renderWYR(st, body);
+}
+
+function roundTitle(type){
+  return {trivia:'Trivia Sprint', bluff:'Bluff Trivia', prefix:'Prefix Blitz', boggle:'Boggle', wordbank:'Most Words', clue:'Clue Chain', blackjack:'21 Blackjack', war:'I Declare War', emoji:'Emoji Guess', hilo:'Higher or Lower', wyr:'Would You Rather'}[type] || type;
+}
+
+/* ---- Trivia ---- */
+function renderTrivia(st, body){
+  const round = st.round;
+  if(round.phase==='submit'){
+    body.innerHTML = `
+      <div class="card">
+        ${timerHtml(round)}
+        <div class="prompt-box" style="${round.type==='emoji'?'font-size:44px;text-align:center;letter-spacing:4px;':''}">${escapeHtml(round.question)}</div>
+        <div class="muted" id="submitCountText" style="font-size:13px;margin-bottom:10px;text-align:left;">…</div>
+        ${localSubmitted ? `<div class="muted center">Answer locked in ✓ waiting on everyone else…</div>` : `
+        <label>Your answer</label>
+        <input type="text" id="submitInput" placeholder="Type your answer">
+        <button class="btn-primary" id="subBtn">Lock In Answer</button>`}
+      </div>
+      ${IS_HOST ? hostControlBar(['reveal']) : ''}
+    `;
+    if(!localSubmitted) document.getElementById('subBtn').onclick = playerSubmitText;
+    wireHostControls(st);
+  } else if(round.phase==='reveal'){
+    const results = round.results||[];
+    body.innerHTML = `
+      <div class="card">
+        <div class="tag">Correct answer</div>
+        <div class="prompt-box">${escapeHtml(round.answers[0])}</div>
+        <ul class="players-list">
+          ${results.map(r=>`<li><span>${r.name}${r.correct?' ✅':' ❌'}</span><span class="score">+${r.points}</span></li>`).join('') || '<li>No answers submitted.</li>'}
+        </ul>
+      </div>
+      ${IS_HOST ? `<button class="btn-primary" id="nextBtn">Back to Lobby</button>` : `<div class="card center muted">Waiting for host…</div>`}
+    `;
+    if(IS_HOST) document.getElementById('nextBtn').onclick = hostBackToLobby;
+  }
+}
+
+/* ---- Bluff ---- */
+function renderBluff(st, body){
+  const round = st.round;
+  if(round.phase==='submit'){
+    body.innerHTML = `
+      <div class="card">
+        ${timerHtml(round)}
+        <div class="prompt-box">${escapeHtml(round.fact)}</div>
+        <div class="muted" id="submitCountText" style="font-size:13px;margin-bottom:10px;text-align:left;">…</div>
+        ${localSubmitted ? `<div class="muted center">Bluff submitted ✓ waiting on everyone else…</div>` : `
+        <label>Write a convincing fake answer</label>
+        <input type="text" id="submitInput" placeholder="Your best guess or bluff">
+        <button class="btn-primary" id="subBtn">Submit</button>`}
+      </div>
+      ${IS_HOST ? hostControlBar(['vote']) : ''}
+    `;
+    if(!localSubmitted) document.getElementById('subBtn').onclick = playerSubmitText;
+    wireHostControls(st);
+  } else if(round.phase==='vote'){
+    renderBluffVote(st, body);
+  } else if(round.phase==='reveal'){
+    const subs = round.subs||{}, votes=round.votes||{};
+    let rows = Object.keys(subs).map(name=>{
+      const voteCount = Object.values(votes).filter(v=>v===name).length;
+      return `<li><span>${name}: "${escapeHtml(subs[name])}"</span><span class="score">${voteCount} fooled</span></li>`;
+    }).join('');
+    const realVotes = Object.values(votes).filter(v=>v==='REAL').length;
+    body.innerHTML = `
+      <div class="card">
+        <div class="tag">Real answer</div>
+        <div class="prompt-box">${escapeHtml(round.answer)} <span class="muted" style="font-size:14px;">(${realVotes} guessed right, +2 each)</span></div>
+        <div class="tag">The bluffs</div>
+        <ul class="players-list">${rows || '<li>No bluffs submitted.</li>'}</ul>
+      </div>
+      ${IS_HOST ? `<button class="btn-primary" id="nextBtn">Back to Lobby</button>` : `<div class="card center muted">Waiting for host…</div>`}
+    `;
+    if(IS_HOST) document.getElementById('nextBtn').onclick = hostBackToLobby;
+  }
+}
+
+async function renderBluffVote(st, body){
+  const round = st.round;
+  // gather submissions live
+  const subKeys = await sList(`vault:${CODE}:submit:${st.roundNum}:`);
+  let options = [{key:'REAL', text:round.answer, isReal:true}];
+  for(const k of subKeys){
+    const name = k.split(':').slice(4).join(':');
+    if(name===ME) continue; // can't vote your own bluff
+    const s = await sGet(k);
+    if(s) options.push({key:name, text:s.text});
+  }
+  // shuffle deterministically-ish per render (fine, just visual)
+  options = options.sort(()=>Math.random()-0.5);
+  if(body !== document.getElementById('roundBody')) return; // a newer render already replaced this screen
+  body.innerHTML = `
+    <div class="card">
+      <div class="tag">Which one is the real answer?</div>
+      <div class="prompt-box" style="font-size:16px;">${escapeHtml(round.fact)}</div>
+      <div class="muted" id="submitCountText" style="font-size:13px;margin-bottom:10px;text-align:left;">…</div>
+      <div id="voteOpts">
+        ${options.map(o=>`<div class="submission-item ${selectedVoteChoice===o.key?'selected':''}" data-choice="${o.key}">${escapeHtml(o.text)}</div>`).join('')}
+      </div>
+    </div>
+    ${IS_HOST ? hostControlBar(['reveal']) : ''}
+  `;
+  root.querySelectorAll('#voteOpts .submission-item').forEach(el=>{
+    el.onclick = ()=> playerVote(el.getAttribute('data-choice'));
+  });
+  wireHostControls(st);
+}
+
+/* ---- Generic (Prefix / WordBank) ---- */
+function renderGenericSubmit(st, body, cfg){
+  const round = st.round;
+  if(round.phase==='submit'){
+    const timeIsUp = round.startedAt && round.durationMs && (Date.now()-round.startedAt >= round.durationMs);
+    body.innerHTML = `
+      <div class="card">
+        ${timerHtml(round)}
+        <div class="tag">${cfg.label}</div>
+        <div class="prompt-box">${cfg.promptHtml}</div>
+        <div class="muted" style="margin-bottom:6px;font-size:13px;">${cfg.instructions}</div>
+        <div class="muted" id="submitCountText" style="font-size:13px;margin-bottom:10px;text-align:left;">…</div>
+        ${timeIsUp ? `<div class="muted center" style="padding:12px 0;">⏰ Time's up — your list was saved automatically. Waiting for the host to reveal results…</div>` : `
+        ${wordBoxesHtml(4)}
+        <button class="btn-primary" id="subBtn">Save My List</button>
+        <div class="muted" id="savedIndicator" style="font-size:12px;margin:-6px 0 10px;">One word per box. Add more boxes as you think of words — your list saves when you tap Save, and auto-saves when time runs out.</div>`}
+      </div>
+      ${IS_HOST ? hostControlBar(['reveal']) : ''}
+    `;
+    if(!timeIsUp){
+      document.getElementById('subBtn').onclick = playerSubmitList;
+      wireWordBoxes();
+    }
+    wireHostControls(st);
+  } else if(round.phase==='reveal'){
+    const pp = round.perPlayer||{};
+    const freq = round.wordFreq||{};
+    body.innerHTML = `
+      <div class="card">
+        <div class="tag">Results</div>
+        <div class="muted" style="font-size:12px;margin-bottom:10px;">Words in <span style="color:var(--good);">green</span> were unique and scored. Words <s>struck through</s> were also found by someone else, so they scored 0.</div>
+        ${Object.keys(pp).map(name=>`
+          <div style="margin-bottom:10px;">
+            <div style="font-weight:600;margin-bottom:4px;">${name}</div>
+            <div class="muted" style="font-size:14px;">${pp[name].length? pp[name].map(w=> freq[w]===1 ? `<span style="color:var(--good);">${w}</span>` : `<s>${w}</s>`).join(', ') : '(nothing valid submitted)'}</div>
+          </div>
+        `).join('') || '<div class="muted">No submissions.</div>'}
+      </div>
+      ${IS_HOST ? `<button class="btn-primary" id="nextBtn">Back to Lobby</button>` : `<div class="card center muted">Waiting for host…</div>`}
+    `;
+    if(IS_HOST) document.getElementById('nextBtn').onclick = hostBackToLobby;
+  }
+}
+
+/* ---- Boggle ---- */
+function renderBoggle(st, body){
+  const round = st.round;
+  const gridHtml = `<div class="grid-boggle">${round.grid.map(l=>`<div class="cell">${l}</div>`).join('')}</div>`;
+  if(round.phase==='submit'){
+    const timeIsUp = round.startedAt && round.durationMs && (Date.now()-round.startedAt >= round.durationMs);
+    body.innerHTML = `
+      <div class="card">
+        ${timerHtml(round)}
+        ${gridHtml}
+        <div class="muted" style="margin-bottom:10px;font-size:13px;text-align:center;">Find words (3+ letters) using adjacent letters, any direction.</div>
+        <div class="muted" id="submitCountText" style="font-size:13px;margin-bottom:10px;text-align:left;">…</div>
+        ${timeIsUp ? `<div class="muted center" style="padding:12px 0;">⏰ Time's up — your list was saved automatically. Waiting for the host to reveal results…</div>` : `
+        ${wordBoxesHtml(4)}
+        <button class="btn-primary" id="subBtn">Save My List</button>
+        <div class="muted" id="savedIndicator" style="font-size:12px;margin:-6px 0 10px;">One word per box. Add more boxes as you spot words — your list saves when you tap Save, and auto-saves when time runs out.</div>`}
+      </div>
+      ${IS_HOST ? hostControlBar(['reveal']) : ''}
+    `;
+    if(!timeIsUp){
+      document.getElementById('subBtn').onclick = playerSubmitList;
+      wireWordBoxes();
+    }
+    wireHostControls(st);
+  } else if(round.phase==='reveal'){
+    const pp = round.perPlayer||{};
+    const freq = round.wordFreq||{};
+    body.innerHTML = `
+      <div class="card">
+        ${gridHtml}
+        <div class="tag">Valid words found</div>
+        <div class="muted" style="font-size:12px;margin-bottom:10px;">Words in <span style="color:var(--good);">green</span> were unique and scored. Words <s>struck through</s> were also found by someone else, so they scored 0.</div>
+        ${Object.keys(pp).map(name=>`
+          <div style="margin-bottom:10px;">
+            <div style="font-weight:600;margin-bottom:4px;">${name}</div>
+            <div class="muted" style="font-size:14px;">${pp[name].length? pp[name].map(w=> freq[w]===1 ? `<span style="color:var(--good);">${w}</span>` : `<s>${w}</s>`).join(', ') : '(none valid)'}</div>
+          </div>
+        `).join('') || '<div class="muted">No submissions.</div>'}
+      </div>
+      ${IS_HOST ? `<button class="btn-primary" id="nextBtn">Back to Lobby</button>` : `<div class="card center muted">Waiting for host…</div>`}
+    `;
+    if(IS_HOST) document.getElementById('nextBtn').onclick = hostBackToLobby;
+  }
+}
+
+/* ---- Clue Chain ---- */
+function renderClue(st, body){
+  const round = st.round;
+  const amGiver = (ME === round.clueGiver);
+  if(round.phase==='clueing' || round.phase==='guessing'){
+    body.innerHTML = `
+      <div class="card">
+        <div class="tag">${amGiver ? 'You are the Clue Giver' : `${round.clueGiver} is giving clues`}</div>
+        ${amGiver ? `<div class="prompt-box">Secret word: <b>${round.secretWord}</b></div>` : `<div class="prompt-box">Guess the secret word from the clues below.</div>`}
+        <div class="tag">Clues so far</div>
+        <ul class="clue-log">
+          ${(round.clues||[]).map((c,i)=>`<li><span class="idx">${i+1}</span>${escapeHtml(c)}</li>`).join('') || '<li class="muted">No clues yet.</li>'}
+        </ul>
+        ${amGiver ? `
+          <label>Add a new one-word or short clue (don't say the word itself!)</label>
+          <input type="text" id="clueInput" placeholder="e.g. 'stringed instrument'">
+          <button class="btn-primary" id="clueBtn">Send Clue</button>
+        ` : `
+          <label>Your guess</label>
+          <input type="text" id="guessInput" placeholder="Type your guess">
+          <button class="btn-primary" id="guessBtn">Submit Guess</button>
+        `}
+      </div>
+      ${IS_HOST ? `<button class="btn-secondary" id="forceEndBtn">No one's got it — reveal &amp; skip round</button>` : ''}
+    `;
+    if(amGiver){
+      document.getElementById('clueBtn').onclick = clueGiverAddClue;
+      if(round.phase==='clueing' && (round.clues||[]).length>0){
+        // move to guessing automatically once first clue sent
+      }
+    } else {
+      document.getElementById('guessBtn').onclick = guesserSubmitGuess;
+    }
+    if(IS_HOST){
+      document.getElementById('forceEndBtn').onclick = async ()=>{
+        const s = await sGet(stateKey(CODE));
+        s.round.phase='reveal'; s.round.winner=null; s.round.pointsAwarded=0;
+        await sSet(stateKey(CODE), s);
+      };
+    }
+    // auto-flip phase to guessing once a clue exists (host writes this via maintain loop too, but ensure immediate for giver's own click)
+    if(round.phase==='clueing' && (round.clues||[]).length>0 && amGiver){
+      (async ()=>{
+        const s = await sGet(stateKey(CODE));
+        if(s.round.phase==='clueing'){ s.round.phase='guessing'; await sSet(stateKey(CODE), s); }
+      })();
+    }
+  } else if(round.phase==='reveal'){
+    body.innerHTML = `
+      <div class="card">
+        <div class="tag">Secret word</div>
+        <div class="prompt-box">${round.secretWord}</div>
+        ${round.winner ? `<div class="muted center">${round.winner} guessed it! +${round.pointsAwarded} for them, +${round.pointsAwarded} for ${round.clueGiver}</div>` : `<div class="muted center">No one guessed it this time.</div>`}
+      </div>
+      ${IS_HOST ? `<button class="btn-primary" id="nextBtn">Back to Lobby</button>` : `<div class="card center muted">Waiting for host…</div>`}
+    `;
+    if(IS_HOST) document.getElementById('nextBtn').onclick = hostBackToLobby;
+  }
+}
+
+/* ---- Card game helpers ---- */
+function cardHtml(card){
+  const rank = cardRank(card);
+  const suit = card.slice(-1);
+  const isRed = (suit==='♥'||suit==='♦');
+  return `<div class="playing-card ${isRed?'red':''}">${rank}<span style="font-size:18px;">${suit}</span></div>`;
+}
+function warFlipKey(code,round,flip,name){ return `vault:${code}:warflip:${round}:${flip}:${name}`; }
+
+/* ---- 21 Blackjack ---- */
+async function renderBlackjack(st, body){
+  const round = st.round;
+  if(round.phase==='reveal'){
+    const results = round.results||{};
+    const outcomeLabel = {win:'Won', lose:'Lost', push:'Push', bust:'Bust', blackjack:'Blackjack!'};
+    body.innerHTML = `
+      <div class="card">
+        <div class="tag">Dealer's final hand</div>
+        <div class="card-row">${(round.dealerFinalHand||[]).map(cardHtml).join('')}</div>
+        <div class="hand-value">${round.dealerFinalValue}${round.dealerFinalValue>21?' — BUST':''}</div>
+        <div class="tag" style="margin-top:10px;">Results</div>
+        <ul class="players-list">
+          ${Object.keys(results).map(name=>{
+            const r = results[name];
+            return `<li><span>${name} (${r.value}) — ${outcomeLabel[r.outcome]}</span><span class="score">+${r.points}</span></li>`;
+          }).join('') || '<li>No hands played.</li>'}
+        </ul>
+      </div>
+      ${IS_HOST ? `<button class="btn-primary" id="nextBtn">Back to Lobby</button>` : `<div class="card center muted">Waiting for host…</div>`}
+    `;
+    if(IS_HOST) document.getElementById('nextBtn').onclick = hostBackToLobby;
+    return;
+  }
+  const key = submitKey(CODE, st.roundNum, ME);
+  let mine = await sGet(key);
+  if(!mine){
+    const deck = makeShuffledDeck();
+    const hand = [deck.pop(), deck.pop()];
+    mine = {hand, deck, standing:false};
+    await sSet(key, mine);
+  }
+  const myValue = blackjackHandValue(mine.hand);
+  if(body !== document.getElementById('roundBody')) return; // a newer render already replaced this screen
+  body.innerHTML = `
+    <div class="card">
+      ${timerHtml(round)}
+      <div class="tag">Dealer shows</div>
+      <div class="card-row">${cardHtml(round.dealerHand[0])}<div class="playing-card hidden">?</div></div>
+      <div class="muted" id="submitCountText" style="font-size:13px;margin:8px 0;text-align:left;">…</div>
+      <div class="tag" style="margin-top:10px;">Your hand</div>
+      <div class="card-row">${mine.hand.map(cardHtml).join('')}</div>
+      <div class="hand-value">${myValue}${myValue>21?' — BUST':''}</div>
+      ${mine.standing ? `<div class="muted center">You're standing at ${myValue}. Waiting on everyone else…</div>` : `
+        <div class="row">
+          <button class="btn-primary" id="hitBtn" ${myValue>=21?'disabled':''}>Hit</button>
+          <button class="btn-secondary" id="standBtn">Stand</button>
+        </div>`}
+    </div>
+    ${IS_HOST ? hostControlBar(['reveal']) : ''}
+  `;
+  if(!mine.standing){
+    document.getElementById('hitBtn').onclick = async ()=>{
+      const fresh = await sGet(key);
+      if(!fresh || fresh.standing) return;
+      const card = fresh.deck.pop();
+      fresh.hand.push(card);
+      const val = blackjackHandValue(fresh.hand);
+      if(val>=21) fresh.standing = true;
+      await sSet(key, fresh);
+      render(lastState);
+    };
+    document.getElementById('standBtn').onclick = async ()=>{
+      const fresh = await sGet(key);
+      if(!fresh) return;
+      fresh.standing = true;
+      await sSet(key, fresh);
+      render(lastState);
+    };
+  }
+  wireHostControls(st);
+}
+
+/* ---- I Declare War ---- */
+async function warResolveFlipIfReady(st, force){
+  const round = st.round;
+  const flipKeys = await sList(`vault:${st.code}:warflip:${st.roundNum}:${round.flip}:`);
+  if(flipKeys.length < st.players.length && !force) return false;
+  let flips = {};
+  for(const k of flipKeys){
+    const name = k.split(':').slice(5).join(':');
+    const v = await sGet(k);
+    if(v) flips[name]=v.card;
+  }
+  if(Object.keys(flips).length===0){
+    if(round.flip >= round.totalFlips){
+      round.phase='reveal';
+      for(const name in round.flipWins) st.totalScores[name]=(st.totalScores[name]||0)+round.flipWins[name];
+    } else { round.flip += 1; }
+    return true;
+  }
+  let maxStrength = -1;
+  for(const name in flips) maxStrength = Math.max(maxStrength, warCardStrength(flips[name]));
+  let winners = Object.keys(flips).filter(name=>warCardStrength(flips[name])===maxStrength);
+  if(winners.length>1){
+    let warFlips = {};
+    for(const name of winners){
+      const deckObj = await sGet(submitKey(st.code, st.roundNum, name));
+      if(deckObj && deckObj.deck && deckObj.deck.length>0){
+        const card = deckObj.deck.pop();
+        await sSet(submitKey(st.code, st.roundNum, name), deckObj);
+        warFlips[name]=card;
+      }
+    }
+    let maxWar = -1;
+    for(const name in warFlips) maxWar = Math.max(maxWar, warCardStrength(warFlips[name]));
+    const warWinners = Object.keys(warFlips).filter(name=>warCardStrength(warFlips[name])===maxWar);
+    if(warWinners.length===1){
+      round.flipWins[warWinners[0]] = (round.flipWins[warWinners[0]]||0)+2;
+    } else {
+      warWinners.forEach(name=> round.flipWins[name]=(round.flipWins[name]||0)+1);
+    }
+    round.lastFlipResult = {flips, warFlips, flip: round.flip, wasWar:true};
+  } else {
+    round.flipWins[winners[0]] = (round.flipWins[winners[0]]||0)+1;
+    round.lastFlipResult = {flips, flip: round.flip, wasWar:false};
+  }
+  if(round.flip >= round.totalFlips){
+    round.phase = 'reveal';
+    for(const name in round.flipWins) st.totalScores[name]=(st.totalScores[name]||0)+round.flipWins[name];
+  } else {
+    round.flip += 1;
+  }
+  return true;
+}
+
+async function renderWar(st, body){
+  const round = st.round;
+  if(round.phase==='reveal'){
+    const fw = round.flipWins||{};
+    const sorted = Object.keys(fw).sort((a,b)=>(fw[b]||0)-(fw[a]||0));
+    body.innerHTML = `
+      <div class="card">
+        <div class="tag">Final Flip Tally</div>
+        <ul class="players-list">
+          ${sorted.map(name=>`<li><span>${name}</span><span class="score">${fw[name]||0} flip${fw[name]===1?'':'s'} won</span></li>`).join('') || '<li>No flips played.</li>'}
+        </ul>
+      </div>
+      ${IS_HOST ? `<button class="btn-primary" id="nextBtn">Back to Lobby</button>` : `<div class="card center muted">Waiting for host…</div>`}
+    `;
+    if(IS_HOST) document.getElementById('nextBtn').onclick = hostBackToLobby;
+    return;
+  }
+  const key = submitKey(CODE, st.roundNum, ME);
+  let mine = await sGet(key);
+  if(!mine){
+    mine = {deck: makeShuffledDeck()};
+    await sSet(key, mine);
+  }
+  const myFlipKey = warFlipKey(CODE, st.roundNum, round.flip, ME);
+  const myFlip = await sGet(myFlipKey);
+  const last = round.lastFlipResult;
+  const fw = round.flipWins||{};
+  if(body !== document.getElementById('roundBody')) return; // a newer render already replaced this screen
+  body.innerHTML = `
+    <div class="card">
+      ${timerHtml(round)}
+      <div class="tag">Flip ${round.flip} of ${round.totalFlips}</div>
+      ${last && last.flip===round.flip-1 ? `
+        <div class="muted" style="margin-bottom:10px;font-size:13px;">Last flip: ${Object.keys(last.flips).map(n=>`${n} ${last.flips[n]}`).join(' · ')}${last.wasWar?' — tied! WAR broke it.':''}</div>
+      ` : ''}
+      ${myFlip ? `
+        <div class="tag">Your flip</div>
+        <div class="card-row">${cardHtml(myFlip.card)}</div>
+        <div class="muted center">Waiting on everyone else to flip…</div>
+      ` : `
+        <button class="btn-primary" id="flipBtn">Flip Card</button>
+      `}
+      <div class="divider"></div>
+      <div class="tag">Flip wins so far</div>
+      <ul class="players-list">${(st.players||[]).map(p=>`<li><span>${p}</span><span class="score">${fw[p]||0}</span></li>`).join('')}</ul>
+    </div>
+    ${IS_HOST ? `<button class="btn-secondary" id="forceSkipFlip">Skip This Flip (someone stuck?)</button>` : ''}
+  `;
+  if(!myFlip){
+    document.getElementById('flipBtn').onclick = async ()=>{
+      const fresh = await sGet(key);
+      if(!fresh || !fresh.deck || fresh.deck.length===0) return;
+      const card = fresh.deck.pop();
+      await sSet(key, fresh);
+      await sSet(myFlipKey, {card, ts:Date.now()});
+      render(lastState);
+    };
+  }
+  if(IS_HOST){
+    document.getElementById('forceSkipFlip').onclick = async ()=>{
+      const s = await sGet(stateKey(CODE));
+      if(!s){ showDebug('Could not load game state — try again.'); return; }
+      ensureArrays(s);
+      await warResolveFlipIfReady(s, true);
+      await sSet(stateKey(CODE), s);
+      render(s);
+    };
+  }
+}
+
+/* ---- Higher or Lower ---- */
+async function renderHiLo(st, body){
+  const round = st.round;
+  if(round.phase==='reveal'){
+    const results = round.results||{};
+    body.innerHTML = `
+      <div class="card">
+        <div class="tag">Final Streaks</div>
+        <ul class="players-list">
+          ${Object.keys(results).map(name=>{
+            const r = results[name];
+            const label = r.outcome==='busted' ? `Busted at streak ${r.streak}` : `Cashed out at streak ${r.streak}`;
+            return `<li><span>${name} — ${label}</span><span class="score">+${r.points}</span></li>`;
+          }).join('') || '<li>No one played.</li>'}
+        </ul>
+      </div>
+      ${IS_HOST ? `<button class="btn-primary" id="nextBtn">Back to Lobby</button>` : `<div class="card center muted">Waiting for host…</div>`}
+    `;
+    if(IS_HOST) document.getElementById('nextBtn').onclick = hostBackToLobby;
+    return;
+  }
+  const key = submitKey(CODE, st.roundNum, ME);
+  let mine = await sGet(key);
+  if(!mine){
+    const deck = makeShuffledDeck();
+    const currentCard = deck.pop();
+    mine = {deck, currentCard, streak:0, outcome:'active'};
+    await sSet(key, mine);
+  }
+  if(mine.outcome!=='active'){
+    if(body !== document.getElementById('roundBody')) return; // a newer render already replaced this screen
+    body.innerHTML = `
+      <div class="card">
+        <div class="tag">Your final card</div>
+        <div class="card-row">${cardHtml(mine.currentCard)}</div>
+        <div class="hand-value">Streak: ${mine.streak}</div>
+        <div class="muted center">${mine.outcome==='busted' ? "Busted — that streak scores 0." : "Cashed out — locked in!"} Waiting on everyone else…</div>
+      </div>
+      ${IS_HOST ? hostControlBar(['reveal']) : ''}
+    `;
+    wireHostControls(st);
+    return;
+  }
+  if(body !== document.getElementById('roundBody')) return; // a newer render already replaced this screen
+  body.innerHTML = `
+    <div class="card">
+      ${timerHtml(round)}
+      <div class="tag">Current card</div>
+      <div class="card-row">${cardHtml(mine.currentCard)}</div>
+      <div class="hand-value">Current streak: ${mine.streak}${mine.streak>0?` (worth +${mine.streak} if you cash out now)`:''}</div>
+      <div class="muted" id="submitCountText" style="font-size:13px;margin-bottom:10px;text-align:left;">…</div>
+      <div class="muted" style="font-size:13px;margin-bottom:10px;text-align:center;">Will the next card be higher or lower? Guess wrong and you lose the whole streak — cash out anytime to bank it.</div>
+      <div class="row">
+        <button class="btn-secondary" id="lowerBtn">⬇️ Lower</button>
+        <button class="btn-secondary" id="higherBtn">⬆️ Higher</button>
+      </div>
+      ${mine.streak>0 ? `<button class="btn-primary" id="cashOutBtn">💰 Cash Out (+${mine.streak})</button>` : ''}
+    </div>
+    ${IS_HOST ? hostControlBar(['reveal']) : ''}
+  `;
+  async function guess(direction){
+    const fresh = await sGet(key);
+    if(!fresh || fresh.outcome!=='active' || !fresh.deck || fresh.deck.length===0) return;
+    const next = fresh.deck.pop();
+    const curStrength = warCardStrength(fresh.currentCard);
+    const nextStrength = warCardStrength(next);
+    if(nextStrength===curStrength){
+      fresh.currentCard = next; // push — no change, just continue
+    } else {
+      const wasHigher = nextStrength>curStrength;
+      if((direction==='higher')===wasHigher){
+        fresh.streak += 1;
+        fresh.currentCard = next;
+      } else {
+        fresh.currentCard = next;
+        fresh.outcome = 'busted';
+      }
+    }
+    await sSet(key, fresh);
+    render(lastState);
+  }
+  document.getElementById('higherBtn').onclick = ()=>guess('higher');
+  document.getElementById('lowerBtn').onclick = ()=>guess('lower');
+  const cashBtn = document.getElementById('cashOutBtn');
+  if(cashBtn){
+    cashBtn.onclick = async ()=>{
+      const fresh = await sGet(key);
+      if(!fresh || fresh.outcome!=='active') return;
+      fresh.outcome = 'cashedOut';
+      await sSet(key, fresh);
+      render(lastState);
+    };
+  }
+  wireHostControls(st);
+}
+
+/* ---- Would You Rather ---- */
+async function renderWYR(st, body){
+  const round = st.round;
+  if(round.phase==='vote'){
+    const myKey = voteKey(CODE, st.roundNum, ME);
+    const myVote = await sGet(myKey);
+    if(body !== document.getElementById('roundBody')) return; // a newer render already replaced this screen
+    body.innerHTML = `
+      <div class="card">
+        ${timerHtml(round)}
+        <div class="muted" id="submitCountText" style="font-size:13px;margin-bottom:10px;text-align:left;">…</div>
+        <div class="submission-item ${myVote && myVote.choice==='A' ? 'selected':''}" data-choice="A" style="cursor:pointer;">
+          <b>A:</b> ${escapeHtml(round.optionA)}
+        </div>
+        <div class="submission-item ${myVote && myVote.choice==='B' ? 'selected':''}" data-choice="B" style="cursor:pointer;">
+          <b>B:</b> ${escapeHtml(round.optionB)}
+        </div>
+        ${myVote ? `<div class="muted center" style="margin-top:10px;">Vote locked in ✓ — change your mind anytime before reveal.</div>` : ''}
+      </div>
+      ${IS_HOST ? hostControlBar(['reveal']) : ''}
+    `;
+    body.querySelectorAll('[data-choice]').forEach(el=>{
+      el.onclick = async ()=>{
+        await sSet(myKey, {choice: el.getAttribute('data-choice'), ts: Date.now()});
+        render(lastState);
+      };
+    });
+    wireHostControls(st);
+  } else if(round.phase==='reveal'){
+    const votes = round.voteBreakdown || {A:0,B:0};
+    const results = round.results || {};
+    body.innerHTML = `
+      <div class="card">
+        <div class="tag">The vote</div>
+        <div class="muted" style="margin-bottom:10px;">A: ${escapeHtml(round.optionA)} — ${votes.A} vote${votes.A===1?'':'s'}<br>B: ${escapeHtml(round.optionB)} — ${votes.B} vote${votes.B===1?'':'s'}</div>
+        <div class="tag">Results</div>
+        <ul class="players-list">
+          ${Object.keys(results).map(name=>`<li><span>${name} (picked ${results[name].choice})${results[name].blackSheep?' 🐑 lone dissenter!':''}</span><span class="score">+${results[name].points}</span></li>`).join('') || '<li>No votes cast.</li>'}
+        </ul>
+      </div>
+      ${IS_HOST ? `<button class="btn-primary" id="nextBtn">Back to Lobby</button>` : `<div class="card center muted">Waiting for host…</div>`}
+    `;
+    if(IS_HOST) document.getElementById('nextBtn').onclick = hostBackToLobby;
+  }
+}
+
+/* ---- Host controls (submit->vote/reveal transitions) ---- */
+function hostControlBar(nextOptions){
+  return `<div class="card">
+    <div class="tag">Host controls</div>
+    ${nextOptions.includes('vote') ? `<button class="btn-secondary" id="hostAdvance">Everyone's In — Move to Voting</button>` : ''}
+    ${nextOptions.includes('reveal') ? `<button class="btn-secondary" id="hostAdvance">Everyone's In — Reveal Results</button>` : ''}
+  </div>`;
+}
+function wireHostControls(st){
+  const btn = document.getElementById('hostAdvance');
+  if(!btn) return;
+  btn.onclick = async ()=>{
+    const round = st.round;
+    if(round.phase==='submit' && round.type==='bluff'){
+      await hostAdvancePhase('vote');
+    } else {
+      const isWordRound = LIST_ROUND_TYPES.includes(round.type);
+      if(isWordRound){ btn.textContent='Checking spelling…'; btn.disabled=true; }
+      try{
+        await hostTallyAndReveal();
+      } finally {
+        if(isWordRound){ btn.textContent='Everyone\'s In — Reveal Results'; btn.disabled=false; }
+      }
+    }
+  };
+}
+
+/* ---- Scoreboard ---- */
+function renderScoreboard(st){
+  const sorted = [...st.players].sort((a,b)=>(st.totalScores[b]||0)-(st.totalScores[a]||0));
+  root.innerHTML = `
+    <div class="brand">
+      <div class="mark">GAME OVER</div>
+      <h1>Final Scores</h1>
+    </div>
+    <div class="card scoreboard-podium">
+      <div class="place1">🏆 ${sorted[0]||'—'}</div>
+      <div class="muted">wins with ${st.totalScores[sorted[0]]||0} points</div>
+    </div>
+    <div class="card">${scoreListHtml(st)}</div>
+    ${IS_HOST ? `<button class="btn-primary" id="newRoundBtn">Play Another Round</button>` : ''}
+  `;
+  if(IS_HOST){
+    document.getElementById('newRoundBtn').onclick = async ()=>{
+      const s = await sGet(stateKey(CODE));
+      s.phase='lobby'; await sSet(stateKey(CODE), s);
+    };
+  }
+}
+
+function escapeHtml(s){
+  const d=document.createElement('div'); d.textContent=s; return d.innerHTML;
+}
+
+/* local 1s tick to refresh timer display without waiting for poll */
+const LIST_ROUND_TYPES = ['prefix','boggle','wordbank'];
+let autoSubmittedForRound = 0;
+
+function updateTimerOnly(){
+  if(!lastState || lastState.phase!=='round' || !lastState.round) return;
+  const round = lastState.round;
+  if(!round.startedAt || !round.durationMs) return;
+  const elapsed = Date.now()-round.startedAt;
+  const remain = Math.max(0, Math.ceil((round.durationMs-elapsed)/1000));
+  const pct = Math.max(0,Math.min(1,(round.durationMs-elapsed)/round.durationMs));
+  const circ = 2*Math.PI*36;
+  const numEl = document.getElementById('timerNumText');
+  const ringEl = document.getElementById('timerRingCircle');
+  if(numEl) numEl.textContent = remain+'s';
+  if(ringEl) ringEl.setAttribute('stroke-dashoffset', circ*(1-pct));
+
+  // once time is up for list-based rounds, keep everything locked on every tick
+  if(remain<=0 && LIST_ROUND_TYPES.includes(round.type) && round.phase==='submit'){
+    document.querySelectorAll('.word-box-input').forEach(i=>i.disabled=true);
+    const addBtn = document.getElementById('addWordBtn');
+    if(addBtn) addBtn.disabled = true;
+    const subBtn = document.getElementById('subBtn');
+    if(subBtn) subBtn.disabled = true;
+
+    if(autoSubmittedForRound !== lastState.roundNum){
+      autoSubmittedForRound = lastState.roundNum;
+      const words = gatherWordBoxValues();
+      sSet(submitKey(CODE, lastState.roundNum, ME), {text: words.join(','), ts: Date.now()})
+        .then(ok=>{
+          const savedEl = document.getElementById('savedIndicator');
+          if(savedEl){
+            savedEl.textContent = ok
+              ? `Time's up — your ${words.length} word${words.length===1?'':'s'} ${words.length===1?'was':'were'} submitted automatically.`
+              : "Time's up, but auto-submit failed — check your connection.";
+            savedEl.style.color = ok ? 'var(--good)' : 'var(--coral)';
+          }
+        })
+        .catch(e=>showDebug('Auto-submit failed: '+(e&&e.message||e)));
+    }
+  }
+
+  // trivia/bluff: auto-submit whatever's typed (even blank) the instant time runs out,
+  // but only if the player hasn't already manually locked in an answer
+  if(remain<=0 && (round.type==='trivia' || round.type==='bluff' || round.type==='emoji') && round.phase==='submit'
+     && !localSubmitted && autoSubmittedForRound !== lastState.roundNum){
+    autoSubmittedForRound = lastState.roundNum;
+    const el = document.getElementById('submitInput');
+    const val = el ? el.value : '';
+    sSet(submitKey(CODE, lastState.roundNum, ME), {text: val, ts: Date.now()})
+      .then(()=>{ localSubmitted = true; render(lastState); })
+      .catch(e=>showDebug('Auto-submit failed: '+(e&&e.message||e)));
+  }
+
+  // blackjack: auto-stand at whatever hand you have when time runs out
+  if(remain<=0 && round.type==='blackjack' && round.phase==='submit'
+     && autoSubmittedForRound !== lastState.roundNum){
+    autoSubmittedForRound = lastState.roundNum;
+    (async ()=>{
+      const key = submitKey(CODE, lastState.roundNum, ME);
+      const mine = await sGet(key);
+      if(mine && !mine.standing){
+        mine.standing = true;
+        await sSet(key, mine);
+        render(lastState);
+      }
+    })();
+  }
+
+  // war: auto-flip your next card if you haven't flipped yet when time runs out
+  if(remain<=0 && round.type==='war' && round.phase==='submit'
+     && autoSubmittedForRound !== lastState.roundNum){
+    autoSubmittedForRound = lastState.roundNum;
+    (async ()=>{
+      const key = submitKey(CODE, lastState.roundNum, ME);
+      const myFlipKey = warFlipKey(CODE, lastState.roundNum, round.flip, ME);
+      const already = await sGet(myFlipKey);
+      if(already) return;
+      const fresh = await sGet(key);
+      if(fresh && fresh.deck && fresh.deck.length>0){
+        const card = fresh.deck.pop();
+        await sSet(key, fresh);
+        await sSet(myFlipKey, {card, ts:Date.now()});
+        render(lastState);
+      }
+    })();
+  }
+  // hilo: auto-cash-out at whatever streak you have when time runs out
+  if(remain<=0 && round.type==='hilo' && round.phase==='submit'
+     && autoSubmittedForRound !== lastState.roundNum){
+    autoSubmittedForRound = lastState.roundNum;
+    (async ()=>{
+      const key = submitKey(CODE, lastState.roundNum, ME);
+      const mine = await sGet(key);
+      if(mine && mine.outcome==='active'){
+        mine.outcome = 'cashedOut';
+        await sSet(key, mine);
+        render(lastState);
+      }
+    })();
+  }
+}
+LOCAL_TICK = setInterval(updateTimerOnly, 1000);
+
+async function updateSubmitCounter(){
+  if(!lastState || lastState.phase!=='round' || !lastState.round) return;
+  const round = lastState.round;
+  const el = document.getElementById('submitCountText');
+  if(!el) return;
+  const total = (lastState.players||[]).length;
+  try{
+    let count = 0, label = 'answered';
+    if(round.phase==='submit' && (round.type==='blackjack' || round.type==='hilo')){
+      const keys = await sList(`vault:${CODE}:submit:${lastState.roundNum}:`);
+      let done = 0;
+      for(const k of keys){
+        const v = await sGet(k);
+        if(!v) continue;
+        if(round.type==='blackjack' && v.standing) done++;
+        if(round.type==='hilo' && v.outcome && v.outcome!=='active') done++;
+      }
+      count = done;
+      label = round.type==='blackjack' ? 'standing' : 'cashed out or busted';
+    } else if(round.phase==='submit'){
+      const keys = await sList(`vault:${CODE}:submit:${lastState.roundNum}:`);
+      count = keys.length;
+      label = (round.type==='bluff') ? 'submitted' : 'answered';
+    } else if(round.phase==='vote' && (round.type==='bluff' || round.type==='wyr')){
+      const keys = await sList(`vault:${CODE}:vote:${lastState.roundNum}:`);
+      count = keys.length;
+      label = 'voted';
+    } else {
+      return;
+    }
+    el.textContent = `${count} of ${total} ${label}`;
+    if(count>=total && total>0){
+      el.style.color = 'var(--good)';
+      el.style.fontWeight = '700';
+    } else {
+      el.style.color = '';
+      el.style.fontWeight = '';
+    }
+  }catch(e){ /* non-critical, ignore */ }
+}
+setInterval(updateSubmitCounter, 2200);
+
+renderJoinScreen();
+</script>
+</body>
+</html>
